@@ -60,12 +60,12 @@ jobs:
 
             sudo tar -xzf \
               /home/ec2-user/expense-frontend-build.tar.gz \
-              -C /var/www/expense-frontend
+              -C /var/www/expense-static-frontend
 
             echo "Setting ownership..."
 
             sudo chown -R nginx:nginx \
-              /var/www/expense-frontend
+              /var/www/expense-static-frontend
 
             echo "Testing Nginx configuration..."
 
