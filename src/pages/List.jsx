@@ -2,6 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import {
+  loadTransactionsFromBackend,
+  loadCategoriesFromBackend,
+  loadContactsFromBackend,
+  deleteTransactionFromBackend,
+  payInstallmentOnBackend,
+} from "../utils/backendData";
 import "../css/List.css";
 
 function List() {
@@ -26,11 +33,17 @@ function List() {
     search: "",
   });
 
-  // Custom date range (Timeframe -> Custom)
+  // Custom date range
   const [customRange, setCustomRange] = useState({
     from: "",
     to: "",
   });
+
+  // PAGINATION — 25 rows per page
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const rowsPerPage = 25;
 
   // Installment popup
   const [installmentItem, setInstallmentItem] = useState(null);
@@ -43,27 +56,30 @@ function List() {
     remark: "",
   });
 
-  // MARK COMPLETE -> payment panel (PJ Soft प्रमाणे)
+  // MARK COMPLETE
   const [payingId, setPayingId] = useState(null);
   const [payMethod, setPayMethod] = useState("Cash");
   const [payTxnId, setPayTxnId] = useState("");
 
   // =========================
-  // LOAD DATA
+  // LOAD DATA (BACKEND)
   // =========================
 
-  const loadData = () => {
-    const savedTransactions =
-      JSON.parse(localStorage.getItem("transactions")) || [];
+  const loadData = async () => {
+    try {
+      const [backendTransactions, backendCategories, backendContacts] =
+        await Promise.all([
+          loadTransactionsFromBackend(),
+          loadCategoriesFromBackend(),
+          loadContactsFromBackend(),
+        ]);
 
-    const savedCategories =
-      JSON.parse(localStorage.getItem("categories")) || [];
-
-    const savedUsers = JSON.parse(localStorage.getItem("users")) || [];
-
-    setTransactions(savedTransactions);
-    setCategories(savedCategories);
-    setUsers(savedUsers);
+      setTransactions(backendTransactions);
+      setCategories(backendCategories);
+      setUsers(backendContacts);
+    } catch (error) {
+      setTransactions([]);
+    }
   };
 
   useEffect(() => {
@@ -73,10 +89,12 @@ function List() {
 
     window.addEventListener("storage", handleStorage);
     window.addEventListener("focus", handleStorage);
+    window.addEventListener("transactionUpdated", handleStorage);
 
     return () => {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("focus", handleStorage);
+      window.removeEventListener("transactionUpdated", handleStorage);
     };
   }, []);
 
@@ -89,6 +107,10 @@ function List() {
       ...prev,
       [name]: value,
     }));
+
+    // FILTER बदललं की पहिल्या page वर परत
+
+    setCurrentPage(1);
   };
 
   // =========================
@@ -249,13 +271,24 @@ function List() {
 
   const getAmount = (item) => Number(item.total || item.amount || 0);
 
-  const getPaid = (item) => Number(item.paid || 0);
+  // FIX: Payment Status "Complete" असेल तर पूर्ण amount paid आहे
+  // (आधी Complete transaction साठीही Paid ₹0 दिसत होता)
 
-  const getPending = (item) => {
-    if (item.pending !== undefined) {
-      return Number(item.pending || 0);
+  const getPaid = (item) => {
+    if (item.paymentStatus === "Complete") {
+      return getAmount(item);
     }
 
+    return Number(item.paid || 0);
+  };
+
+  const getPending = (item) => {
+    // Payment Status Complete असेल तर Pending = 0
+    if (item.paymentStatus === "Complete") {
+      return 0;
+    }
+
+    // Complete नसेल तर Total - Paid
     const total = getAmount(item);
     const paid = getPaid(item);
 
@@ -277,6 +310,23 @@ function List() {
 
     return Number(item.futurePending || 0);
   };
+
+  // =========================
+  // PAGINATION — 25 rows per page
+  // =========================
+
+  const totalRows = filteredTransactions.length;
+
+  const totalPages = Math.max(Math.ceil(totalRows / rowsPerPage), 1);
+
+  const safePage = Math.min(currentPage, totalPages);
+
+  const startIndex = (safePage - 1) * rowsPerPage;
+
+  const pageTransactions = filteredTransactions.slice(
+    startIndex,
+    startIndex + rowsPerPage,
+  );
 
   // =========================
   // SUMMARY
@@ -398,7 +448,6 @@ function List() {
 
     const doc = new jsPDF();
 
-    // शीर्षक
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(25, 118, 210);
@@ -407,7 +456,9 @@ function List() {
     doc.setDrawColor(200);
     doc.line(20, 26, 190, 26);
 
-    // माहिती
+    // FIX: jsPDF default fonts "₹" support करत नाहीत (garbage print होत),
+    // म्हणून PDF मध्ये "Rs." वापरला आहे
+
     const fields = [
       ["Date", item.date || "-"],
       ["Transaction ID", item.transactionId || "-"],
@@ -415,13 +466,16 @@ function List() {
       ["User", item.user || "-"],
       ["Category", item.category || "-"],
       ["Particular", item.particular || "-"],
-      ["Amount", `₹${Number(item.amount || 0).toLocaleString("en-IN")}`],
-      ["GST", `₹${Number(item.gstAmount || 0).toLocaleString("en-IN")}`],
-      ["TDS", `₹${Number(item.tdsAmount || 0).toLocaleString("en-IN")}`],
-      ["Total", `₹${getAmount(item).toLocaleString("en-IN")}`],
-      ["Paid", `₹${getPaid(item).toLocaleString("en-IN")}`],
-      ["Pending", `₹${getPending(item).toLocaleString("en-IN")}`],
-      ["Future Pending", `₹${getFuturePending(item).toLocaleString("en-IN")}`],
+      ["Amount", `Rs. ${Number(item.amount || 0).toLocaleString("en-IN")}`],
+      ["GST", `Rs. ${Number(item.gstAmount || 0).toLocaleString("en-IN")}`],
+      ["TDS", `Rs. ${Number(item.tdsAmount || 0).toLocaleString("en-IN")}`],
+      ["Total", `Rs. ${getAmount(item).toLocaleString("en-IN")}`],
+      ["Paid", `Rs. ${getPaid(item).toLocaleString("en-IN")}`],
+      ["Pending", `Rs. ${getPending(item).toLocaleString("en-IN")}`],
+      [
+        "Future Pending",
+        `Rs. ${getFuturePending(item).toLocaleString("en-IN")}`,
+      ],
       ["Bill Type", item.billType || "-"],
       ["Payment Status", item.paymentStatus || "-"],
       ["Payment Method", item.paymentMethod || "-"],
@@ -459,18 +513,26 @@ function List() {
   // DELETE
   // =========================
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this transaction?",
     );
 
     if (!confirmDelete) return;
 
-    const updatedTransactions = transactions.filter((item) => item.id !== id);
+    try {
+      // BACKEND DELETE
 
-    setTransactions(updatedTransactions);
+      await deleteTransactionFromBackend(id);
 
-    localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
+      setTransactions(transactions.filter((item) => item.id !== id));
+
+      // FIX: Dashboard / Recent Transactions लगेच sync व्हावेत म्हणून
+
+      window.dispatchEvent(new Event("transactionUpdated"));
+    } catch (error) {
+      alert(error.message || "Could not delete. Is the backend running?");
+    }
   };
 
   // =========================
@@ -520,69 +582,27 @@ function List() {
   };
 
   // =========================
-  // ADD INSTALLMENT (PJ Soft reference प्रमाणे)
+  // ADD INSTALLMENT
   // =========================
 
   const handleAddInstallment = (e) => {
     e.preventDefault();
 
-    if (!installmentItem) return;
+    /* BACKEND MODE: installments transaction तयार
+       करतानाच schedule मध्ये set होतात (backend ला
+       add-installment endpoint नाही). नवीन
+       installment हवा असेल तर transaction edit
+       करा. */
 
-    const instAmount = Number(newInstallment.amount || 0);
-
-    if (instAmount <= 0) {
-      alert("Please enter valid installment amount.");
-      return;
-    }
-
-    const newInst = {
-      id: Date.now(),
-      invoiceNo: `INV${String(Date.now()).slice(-6)}`,
-      amount: instAmount,
-      dueDate: newInstallment.dueDate || "",
-      paymentDate: "",
-      remark: newInstallment.remark || "",
-      status: "Pending",
-      payMethod: "",
-      txnId: "",
-    };
-
-    const installments = installmentItem.installments || [];
-
-    const updatedInstallments = [...installments, newInst];
-
-    const updatedTransactions = transactions.map((item) =>
-      item.id === installmentItem.id
-        ? { ...item, installments: updatedInstallments }
-        : item,
+    alert(
+      "Installments are set when the transaction is created (2 auto installments). To change them, edit the transaction.",
     );
-
-    localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
-
-    setTransactions(updatedTransactions);
-
-    window.dispatchEvent(new Event("transactionUpdated"));
-
-    const refreshedItem =
-      updatedTransactions.find((i) => i.id === installmentItem.id) || null;
-
-    setInstallmentItem(refreshedItem);
-
-    setNewInstallment({
-      amount: "",
-      dueDate: "",
-      remark: "",
-    });
 
     setShowAddInstallment(false);
   };
 
   // =========================
   // MARK INSTALLMENT COMPLETE
-  // =========================
-
-  // =========================
-  // MARK COMPLETE - payment panel उघडा
   // =========================
 
   const handleOpenPayment = (instId) => {
@@ -592,10 +612,10 @@ function List() {
   };
 
   // =========================
-  // CONFIRM PAYMENT (PJ Soft प्रमाणे - method + txn id)
+  // CONFIRM PAYMENT
   // =========================
 
-  const handleConfirmPayment = (instId) => {
+  const handleConfirmPayment = async (instId) => {
     if (!installmentItem) return;
 
     if (payMethod === "Bank Transfer" && !payTxnId.trim()) {
@@ -605,9 +625,6 @@ function List() {
 
     const todayStr = new Date().toISOString().split("T")[0];
 
-    const total = getAmount(installmentItem);
-    const currentPaid = getPaid(installmentItem);
-
     const installments = installmentItem.installments || [];
 
     const targetInst = installments.find((i) => i.id === instId);
@@ -616,58 +633,41 @@ function List() {
 
     if (targetInst.status === "Completed") return;
 
-    const newPaid = currentPaid + Number(targetInst.amount || 0);
-    const newPending = Math.max(total - newPaid, 0);
+    try {
+      /* BACKEND PAYMENT — installment वर amount
+         जातो, backend status update करतो */
 
-    const updatedInstallments = installments.map((i) =>
-      i.id === instId
-        ? {
-            ...i,
-            status: "Completed",
-            paymentDate: todayStr,
-            payMethod,
-            txnId: payMethod === "Bank Transfer" ? payTxnId.trim() : "",
-          }
-        : i,
-    );
-
-    const updatedTransactions = transactions.map((item) =>
-      item.id === installmentItem.id
-        ? {
-            ...item,
-            paid: newPaid,
-            pending: newPending,
-            installments: updatedInstallments,
-            paymentStatus: newPending <= 0 ? "Complete" : item.paymentStatus,
-            // पूर्ण झालं तर Receipt/Invoice आपोआप तयार करा
-            billType:
-              newPending <= 0
-                ? item.billType ||
-                  (item.type === "Income" ? "Invoice" : "Receipt")
-                : item.billType,
-          }
-        : item,
-    );
-
-    localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
-
-    setTransactions(updatedTransactions);
-
-    window.dispatchEvent(new Event("transactionUpdated"));
-
-    const refreshedItem =
-      updatedTransactions.find((i) => i.id === installmentItem.id) || null;
-
-    setInstallmentItem(refreshedItem);
-
-    setPayingId(null);
-    setPayMethod("Cash");
-    setPayTxnId("");
-
-    if (newPending <= 0) {
-      alert(
-        "All installments completed! 🎉 Receipt/Invoice is ready — check the Document column.",
+      await payInstallmentOnBackend(
+        instId,
+        targetInst.amount,
+        todayStr,
+        payTxnId.trim(),
       );
+
+      /* Backend वरून पुन्हा सगळं load (paid/pending
+         + status backend compute करतो) */
+
+      const refreshed = await loadTransactionsFromBackend();
+
+      setTransactions(refreshed);
+
+      window.dispatchEvent(new Event("transactionUpdated"));
+
+      const refreshedItem = refreshed.find((i) => i.id === installmentItem.id);
+
+      setInstallmentItem(refreshedItem || null);
+
+      setPayingId(null);
+      setPayMethod("Cash");
+      setPayTxnId("");
+
+      if (refreshedItem && refreshedItem.pending <= 0) {
+        alert(
+          "All installments completed! 🎉 Receipt/Invoice is ready — check the Document column.",
+        );
+      }
+    } catch (error) {
+      alert(error.message || "Payment failed. Is the backend running?");
     }
   };
 
@@ -837,10 +837,20 @@ function List() {
       )}
 
       {/* =========================
-          SUMMARY + BUTTONS (एकाच ओळीत)
+          SUMMARY
       ========================= */}
 
-      <div className="list-summary">
+      {/* =========================
+          LIST BUTTONS + सगळे COLORED TOTALS (एकच line)
+      ========================= */}
+
+      <div className="list-buttons">
+        <button className="download-btn" onClick={downloadPDF}>
+          ⬇ DOWNLOAD PDF
+        </button>
+
+        <button className="check-btn">Check Mark Transactions</button>
+
         <button className="summary blue">
           Total GST: ₹{totalGST.toLocaleString("en-IN")}
         </button>
@@ -868,12 +878,6 @@ function List() {
         <button className="summary income">
           Total Income: ₹{totalIncome.toLocaleString("en-IN")}
         </button>
-
-        <button className="download-btn" onClick={downloadPDF}>
-          ⬇ DOWNLOAD PDF
-        </button>
-
-        <button className="check-btn">Check Mark Transactions</button>
       </div>
 
       {/* =========================
@@ -907,9 +911,9 @@ function List() {
           {filteredTransactions.length === 0 ? (
             <div className="empty-list">No transactions found</div>
           ) : (
-            filteredTransactions.map((item, index) => (
+            pageTransactions.map((item, index) => (
               <div className="list-table-row" key={item.id}>
-                <span>{index + 1}</span>
+                <span>{startIndex + index + 1}</span>
 
                 <span>{item.date || "-"}</span>
 
@@ -1009,7 +1013,7 @@ function List() {
                   )}
                 </span>
 
-                {/* ACTIONS - फक्त Delete (Edit हे user double click ने) */}
+                {/* ACTIONS - फक्त Delete  */}
 
                 <span className="row-actions">
                   <button
@@ -1021,7 +1025,7 @@ function List() {
                   </button>
                 </span>
 
-                {/* CREATED BY - शेवटचा column */}
+                {/* CREATED BY -  */}
 
                 <span>
                   <b className="created-by">Pune Branch</b>
@@ -1033,7 +1037,56 @@ function List() {
       </div>
 
       {/* =========================
-          INSTALLMENT POPUP (info + table + खाली ADD form)
+          PAGINATION — 25 rows per page
+      ========================= */}
+
+      {totalRows > rowsPerPage && (
+        <div className="pagination">
+          <button
+            className="page-btn"
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            disabled={safePage === 1}
+          >
+            ◀ Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(
+              (n) => n === 1 || n === totalPages || Math.abs(n - safePage) <= 2,
+            )
+            .map((n, idx, arr) => (
+              <span key={n} className="page-btn-wrap">
+                {idx > 0 && n - arr[idx - 1] > 1 && (
+                  <span className="page-dots">…</span>
+                )}
+
+                <button
+                  className={
+                    n === safePage ? "page-btn active-page" : "page-btn"
+                  }
+                  onClick={() => setCurrentPage(n)}
+                >
+                  {n}
+                </button>
+              </span>
+            ))}
+
+          <button
+            className="page-btn"
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+            disabled={safePage === totalPages}
+          >
+            Next ▶
+          </button>
+
+          <span className="page-info">
+            Page {safePage} / {totalPages} &nbsp;|&nbsp; {totalRows} records
+          </span>
+        </div>
+      )}
+
+      {/* =========================
+          INSTALLMENT POPUP
       ========================= */}
 
       {installmentItem && (
@@ -1112,7 +1165,7 @@ function List() {
               </button>
             </div>
 
-            {/* ============ TRANSACTION INFO (वरची माहिती) ============ */}
+            {/* ============ TRANSACTION INFO  ============ */}
 
             <div
               style={{

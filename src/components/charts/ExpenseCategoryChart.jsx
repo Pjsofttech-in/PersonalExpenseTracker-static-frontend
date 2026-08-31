@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -15,46 +15,89 @@ import {
 
 import "../../css/Charts.css";
 
-function ExpenseCategoryChart() {
-  const [chartData, setChartData] = useState([]);
-  const [chartMode, setChartMode] = useState("PIE"); // PIE | BAR
+function ExpenseCategoryChart({ timeframe = "Monthly", transactions = [] }) {
+  const [chartMode, setChartMode] = useState("PIE");
 
-  const loadChartData = () => {
-    const transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+  const getAmount = (item) => Number(item.total || item.amount || 0);
 
-    const expenses = transactions.filter((item) => item.type === "Expense");
+  const getDate = (item) => {
+    if (!item.date) return null;
 
+    const date = new Date(item.date);
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    date.setHours(0, 0, 0, 0);
+
+    return date;
+  };
+
+  const today = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }, []);
+
+  const filteredTransactions = useMemo(() => {
+    if (timeframe === "All") {
+      return transactions;
+    }
+
+    if (timeframe === "Yearly") {
+      return transactions.filter((item) => {
+        const date = getDate(item);
+
+        return date && date.getFullYear() === today.getFullYear();
+      });
+    }
+
+    if (timeframe === "Monthly") {
+      return transactions.filter((item) => {
+        const date = getDate(item);
+
+        return (
+          date &&
+          date.getMonth() === today.getMonth() &&
+          date.getFullYear() === today.getFullYear()
+        );
+      });
+    }
+
+    if (timeframe === "Weekly") {
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+
+      return transactions.filter((item) => {
+        const date = getDate(item);
+
+        return date && date >= weekStart && date <= weekEnd;
+      });
+    }
+
+    return transactions;
+  }, [transactions, timeframe, today]);
+
+  const chartData = useMemo(() => {
     const categoryTotals = {};
 
-    expenses.forEach((item) => {
-      const category = item.category || "Other";
-      const amount = Number(item.total || item.amount || 0);
-      categoryTotals[category] = (categoryTotals[category] || 0) + amount;
-    });
+    filteredTransactions
+      .filter((item) => item.type === "Expense")
+      .forEach((item) => {
+        const category = item.category || "Other";
+        const amount = getAmount(item);
 
-    const data = Object.entries(categoryTotals).map(([name, value]) => ({
+        categoryTotals[category] = (categoryTotals[category] || 0) + amount;
+      });
+
+    return Object.entries(categoryTotals).map(([name, value]) => ({
       name,
       value,
     }));
-
-    setChartData(data);
-  };
-
-  useEffect(() => {
-    loadChartData();
-
-    const handleUpdate = () => loadChartData();
-
-    window.addEventListener("transactionUpdated", handleUpdate);
-    window.addEventListener("storage", handleUpdate);
-    window.addEventListener("focus", handleUpdate);
-
-    return () => {
-      window.removeEventListener("transactionUpdated", handleUpdate);
-      window.removeEventListener("storage", handleUpdate);
-      window.removeEventListener("focus", handleUpdate);
-    };
-  }, []);
+  }, [filteredTransactions]);
 
   const formatAmount = (value) => `₹${Number(value).toLocaleString("en-IN")}`;
 
@@ -83,6 +126,7 @@ function ExpenseCategoryChart() {
             >
               PIE
             </button>
+
             <button
               className={chartMode === "BAR" ? "active" : ""}
               onClick={() => setChartMode("BAR")}
@@ -122,6 +166,7 @@ function ExpenseCategoryChart() {
                 </Pie>
 
                 <Tooltip formatter={(value) => formatAmount(value)} />
+
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -130,7 +175,12 @@ function ExpenseCategoryChart() {
               <BarChart
                 data={chartData}
                 layout="vertical"
-                margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
+                margin={{
+                  top: 10,
+                  right: 20,
+                  left: 10,
+                  bottom: 5,
+                }}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
 

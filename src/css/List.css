@@ -1,6 +1,7 @@
 /* =========================================================
-   LIST PAGE  (तुमची स्वतःची CSS)
+   LIST PAGE
 ========================================================= */
+
 .list-page {
   width: 100%;
   min-height: calc(100vh - 54px);
@@ -80,10 +81,10 @@
 .list-summary {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap; /* एकाच ओळीत - wrap नाही */
+  flex-wrap: nowrap;
   gap: 6px;
   margin: 8px 0 12px;
-  overflow-x: auto; /* कधी अरुंद झालं तर scroll, दुसरी ओळ नाही */
+  overflow-x: auto;
   padding-bottom: 4px;
 }
 
@@ -436,4 +437,70 @@
 
 .custom-range input:focus {
   border-color: #1976d2;
+}
+
+/* =========================================
+   PAGINATION — 25 rows per page
+========================================= */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  margin-bottom: 10px;
+  font-family: "Poppins", sans-serif;
+}
+
+.page-btn-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #cfd4dc;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #333;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+  border-color: #1976d2;
+  color: #1976d2;
+}
+
+.page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.active-page {
+  background: #1976d2;
+  border-color: #1976d2;
+  color: #ffffff;
+}
+
+.active-page:hover {
+  color: #ffffff;
+}
+
+.page-dots {
+  color: #888;
+  padding: 0 2px;
+}
+
+.page-info {
+  margin-left: 10px;
+  color: #666;
+  font-size: 13px;
 }

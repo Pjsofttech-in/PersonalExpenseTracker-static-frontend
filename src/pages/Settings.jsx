@@ -3,10 +3,26 @@ import {
   FaFolder,
   FaUser,
   FaUniversity,
+  FaEdit,
   FaTrash,
   FaPlus,
   FaTimes,
 } from "react-icons/fa";
+
+import {
+  loadCategoriesFromBackend,
+  loadContactsFromBackend,
+  loadBanksFromBackend,
+} from "../utils/backendData";
+import {
+  apiAddCategory,
+  apiDeleteCategory,
+  apiAddContact,
+  apiUpdateContact,
+  apiDeleteContact,
+  apiAddBank,
+  apiDeleteBank,
+} from "../utils/api";
 
 import "../css/Settings.css";
 
@@ -27,13 +43,30 @@ function Settings() {
   const [formData, setFormData] = useState({});
 
   // ==============================
-  // LOAD DATA
+  // LOAD DATA (BACKEND)
   // ==============================
 
+  const loadAll = async () => {
+    try {
+      const [backendCategories, backendContacts, backendBanks] =
+        await Promise.all([
+          loadCategoriesFromBackend(),
+          loadContactsFromBackend(),
+          loadBanksFromBackend(),
+        ]);
+
+      setCategories(backendCategories);
+      setUsers(backendContacts);
+      setBankAccounts(backendBanks);
+    } catch (error) {
+      setCategories([]);
+      setUsers([]);
+      setBankAccounts([]);
+    }
+  };
+
   useEffect(() => {
-    setCategories(JSON.parse(localStorage.getItem("categories")) || []);
-    setUsers(JSON.parse(localStorage.getItem("users")) || []);
-    setBankAccounts(JSON.parse(localStorage.getItem("bankAccounts")) || []);
+    loadAll();
   }, []);
 
   // ==============================
@@ -95,42 +128,21 @@ function Settings() {
   };
 
   // ==============================
-  // SAVE
+  // SAVE (BACKEND)
   // ==============================
 
-  const handleSave = () => {
-    // CATEGORY
+  const handleSave = async () => {
+    // CATEGORY — validation
+
     if (activeTab === "categories") {
       if (!formData.name?.trim()) {
         alert("Please enter category name");
         return;
       }
-
-      let updated;
-
-      if (editId) {
-        updated = categories.map((item) =>
-          item.id === editId
-            ? {
-                ...item,
-                name: formData.name.trim(),
-              }
-            : item,
-        );
-      } else {
-        const newCategory = {
-          id: Date.now(),
-          name: formData.name.trim(),
-        };
-
-        updated = [...categories, newCategory];
-      }
-
-      setCategories(updated);
-      localStorage.setItem("categories", JSON.stringify(updated));
     }
 
-    // USER
+    // USER — validation
+
     if (activeTab === "users") {
       if (!formData.username?.trim()) {
         alert("Please enter username");
@@ -146,36 +158,10 @@ function Settings() {
         alert("Please enter email");
         return;
       }
-
-      let updated;
-
-      if (editId) {
-        updated = users.map((item) =>
-          item.id === editId
-            ? {
-                ...item,
-                username: formData.username.trim(),
-                phone: formData.phone.trim(),
-                email: formData.email.trim(),
-              }
-            : item,
-        );
-      } else {
-        const newUser = {
-          id: Date.now(),
-          username: formData.username.trim(),
-          phone: formData.phone.trim(),
-          email: formData.email.trim(),
-        };
-
-        updated = [...users, newUser];
-      }
-
-      setUsers(updated);
-      localStorage.setItem("users", JSON.stringify(updated));
     }
 
-    // BANK ACCOUNT
+    // BANK ACCOUNT — validation
+
     if (activeTab === "bankAccounts") {
       if (!formData.bankName?.trim()) {
         alert("Please enter bank name");
@@ -201,66 +187,102 @@ function Settings() {
         alert("Please enter IFSC code");
         return;
       }
-
-      let updated;
-
-      if (editId) {
-        updated = bankAccounts.map((item) =>
-          item.id === editId
-            ? {
-                ...item,
-                ...formData,
-              }
-            : item,
-        );
-      } else {
-        const newBank = {
-          id: Date.now(),
-          ...formData,
-        };
-
-        updated = [...bankAccounts, newBank];
-      }
-
-      setBankAccounts(updated);
-      localStorage.setItem("bankAccounts", JSON.stringify(updated));
     }
 
-    setShowForm(false);
-    setEditId(null);
-    setFormData({});
+    /* BACKEND API CALLS */
+
+    try {
+      // CATEGORY (backend मध्ये PUT नाही — edit =
+      // delete + पुन्हा add)
+
+      if (activeTab === "categories") {
+        if (editId) {
+          await apiDeleteCategory(editId);
+        }
+
+        await apiAddCategory(formData.name.trim());
+      }
+
+      // USER / CONTACT (PUT आहे)
+
+      if (activeTab === "users") {
+        const payload = {
+          name: formData.username.trim(),
+          phoneNumber: formData.phone.trim(),
+          email: formData.email.trim(),
+        };
+
+        if (editId) {
+          await apiUpdateContact(editId, payload);
+        } else {
+          await apiAddContact(payload);
+        }
+      }
+
+      // BANK ACCOUNT (backend मध्ये PUT नाही — edit =
+      // delete + पुन्हा add; accountType → enum)
+
+      if (activeTab === "bankAccounts") {
+        const payload = {
+          name: formData.bankName.trim(),
+          branch: formData.branch?.trim() || "",
+          accountNumber: formData.accountNumber.trim(),
+          ifsc: formData.ifscCode.trim(),
+          accountType:
+            formData.accountType === "Current" ? "CURRENT" : "SAVINGS",
+        };
+
+        if (editId) {
+          await apiDeleteBank(editId);
+        }
+
+        await apiAddBank(payload);
+      }
+
+      // BACKEND वरून पुन्हा load
+
+      await loadAll();
+
+      setShowForm(false);
+      setEditId(null);
+      setFormData({});
+    } catch (error) {
+      alert(error.message || "Save failed. Is the backend running?");
+    }
   };
 
   // ==============================
-  // DELETE
+  // DELETE (BACKEND)
   // ==============================
 
-  const deleteItem = (id, type) => {
+  const deleteItem = async (id, type) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this item?",
     );
 
     if (!confirmDelete) return;
 
-    if (type === "category") {
-      const updated = categories.filter((item) => item.id !== id);
+    try {
+      if (type === "category") {
+        await apiDeleteCategory(id);
+      }
 
-      setCategories(updated);
-      localStorage.setItem("categories", JSON.stringify(updated));
-    }
+      if (type === "user") {
+        await apiDeleteContact(id);
+      }
 
-    if (type === "user") {
-      const updated = users.filter((item) => item.id !== id);
+      if (type === "bank") {
+        await apiDeleteBank(id);
+      }
 
-      setUsers(updated);
-      localStorage.setItem("users", JSON.stringify(updated));
-    }
+      // BACKEND वरून पुन्हा load
 
-    if (type === "bank") {
-      const updated = bankAccounts.filter((item) => item.id !== id);
-
-      setBankAccounts(updated);
-      localStorage.setItem("bankAccounts", JSON.stringify(updated));
+      await loadAll();
+    } catch (error) {
+      alert(
+        error.message ||
+          "Delete failed. (Category/Bank transaction मध्ये वापरलेली असेल तर delete होत नाही)",
+      );
     }
   };
 
@@ -309,7 +331,7 @@ function Settings() {
             onClick={() => setActiveTab("categories")}
           >
             <FaFolder />
-            <span>Add Category</span>
+            <span>Category</span>
           </button>
 
           <button
@@ -317,7 +339,7 @@ function Settings() {
             onClick={() => setActiveTab("users")}
           >
             <FaUser />
-            <span>Add User</span>
+            <span>User</span>
           </button>
 
           <button
@@ -325,7 +347,7 @@ function Settings() {
             onClick={() => setActiveTab("bankAccounts")}
           >
             <FaUniversity />
-            <span>Add Bank Account</span>
+            <span>Bank Account</span>
           </button>
         </div>
 
@@ -336,6 +358,13 @@ function Settings() {
 
           {activeTab === "categories" && (
             <div className="settings-section">
+              <div className="section-top">
+                <div>
+                  <h2>Categories</h2>
+                  <p>Manage your income and expense categories</p>
+                </div>
+              </div>
+
               <div className="search-total">
                 <input
                   type="text"
@@ -377,8 +406,15 @@ function Settings() {
                       </span>
 
                       <span className="actions">
+                        <FaEdit
+                          className="edit-icon"
+                          title="Edit category"
+                          onClick={() => openEditForm(item)}
+                        />
+
                         <FaTrash
                           className="delete-icon"
+                          title="Delete category"
                           onClick={() => deleteItem(item.id, "category")}
                         />
                       </span>
@@ -393,6 +429,13 @@ function Settings() {
 
           {activeTab === "users" && (
             <div className="settings-section">
+              <div className="section-top">
+                <div>
+                  <h2>Users</h2>
+                  <p>Manage users for your transactions</p>
+                </div>
+              </div>
+
               <div className="search-total">
                 <input
                   type="text"
@@ -437,8 +480,15 @@ function Settings() {
                       <span>{item.email}</span>
 
                       <span className="actions">
+                        <FaEdit
+                          className="edit-icon"
+                          title="Edit user"
+                          onClick={() => openEditForm(item)}
+                        />
+
                         <FaTrash
                           className="delete-icon"
+                          title="Delete user"
                           onClick={() => deleteItem(item.id, "user")}
                         />
                       </span>
@@ -453,6 +503,13 @@ function Settings() {
 
           {activeTab === "bankAccounts" && (
             <div className="settings-section">
+              <div className="section-top">
+                <div>
+                  <h2>Bank Accounts</h2>
+                  <p>Manage your bank accounts for payments</p>
+                </div>
+              </div>
+
               <div className="search-total">
                 <input
                   type="text"
@@ -509,8 +566,15 @@ function Settings() {
                       <span>{item.ifscCode}</span>
 
                       <span className="actions">
+                        <FaEdit
+                          className="edit-icon"
+                          title="Edit bank account"
+                          onClick={() => openEditForm(item)}
+                        />
+
                         <FaTrash
                           className="delete-icon"
+                          title="Delete bank account"
                           onClick={() => deleteItem(item.id, "bank")}
                         />
                       </span>

@@ -1,4 +1,12 @@
 import { useEffect, useState } from "react";
+import {
+  loadCategoriesFromBackend,
+  loadContactsFromBackend,
+  loadBanksFromBackend,
+  saveTransactionToBackend,
+  ensureDefaultsOnBackend,
+} from "../../utils/backendData";
+
 import "../../css/AddIncome.css";
 
 function AddIncome() {
@@ -47,18 +55,30 @@ function AddIncome() {
      ===================================================== */
 
   useEffect(() => {
-    const loadSettingsData = () => {
-      const savedCategories =
-        JSON.parse(localStorage.getItem("categories")) || [];
+    // BACKEND वरून categories / contacts / banks load
 
-      const savedUsers = JSON.parse(localStorage.getItem("users")) || [];
+    const loadSettingsData = async () => {
+      try {
+        /* पहिल्यांदा defaults बनवा (रिकाम्या
+           backend वर dropdown select करता येईल) */
 
-      const savedBankAccounts =
-        JSON.parse(localStorage.getItem("bankAccounts")) || [];
+        await ensureDefaultsOnBackend();
 
-      setCategories(savedCategories);
-      setUsers(savedUsers);
-      setBankAccounts(savedBankAccounts);
+        const [backendCategories, backendContacts, backendBanks] =
+          await Promise.all([
+            loadCategoriesFromBackend(),
+            loadContactsFromBackend(),
+            loadBanksFromBackend(),
+          ]);
+
+        setCategories(backendCategories);
+        setUsers(backendContacts);
+        setBankAccounts(backendBanks);
+      } catch (error) {
+        setCategories([]);
+        setUsers([]);
+        setBankAccounts([]);
+      }
     };
 
     loadSettingsData();
@@ -73,8 +93,7 @@ function AddIncome() {
   }, []);
 
   /* =====================================================
-     EDIT MODE - List मधून double click ने आल्यावर
-     editTransaction असल्यास form आपोआप भरते
+     EDIT MODE 
      ===================================================== */
 
   useEffect(() => {
@@ -210,7 +229,7 @@ function AddIncome() {
      SAVE
      ===================================================== */
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.user) {
@@ -272,52 +291,42 @@ function AddIncome() {
 
     setError("");
 
-    const newTransaction = {
-      id: Date.now(),
+    /* BACKEND SAVE (add किंवा update) */
 
-      ...formData,
+    try {
+      await saveTransactionToBackend(
+        {
+          ...formData,
 
-      transactionId: showTransactionId ? formData.transactionId.trim() : "",
+          transactionId: showTransactionId ? formData.transactionId.trim() : "",
 
-      amount,
-      gstAmount,
-      tdsAmount,
-      total,
-
-      createdAt: new Date().toISOString(),
-    };
-
-    const existingTransactions =
-      JSON.parse(localStorage.getItem("transactions")) || [];
-
-    let updatedTransactions;
-
-    if (editId) {
-      // EDIT - जुनी transaction बदलून नवीन ठेवा
-      updatedTransactions = existingTransactions.map((item) =>
-        item.id === editId ? { ...item, ...newTransaction, id: editId } : item,
+          amount,
+          gstAmount,
+          tdsAmount,
+          total,
+        },
+        editId,
       );
-    } else {
-      // ADD - नवीन transaction जोडा
-      updatedTransactions = [...existingTransactions, newTransaction];
+
+      // edit session संपवा
+
+      localStorage.removeItem("editTransaction");
+      setEditId(null);
+
+      // Dashboard/List लगेच update व्हावेत म्हणून
+
+      window.dispatchEvent(new Event("transactionUpdated"));
+
+      alert(
+        editId
+          ? "Transaction updated successfully!"
+          : "Transaction added successfully!",
+      );
+
+      handleReset();
+    } catch (error) {
+      alert(error.message || "Could not save. Is the backend running?");
     }
-
-    localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
-
-    // edit session संपवा
-    localStorage.removeItem("editTransaction");
-    setEditId(null);
-
-    // Dashboard/List लगेच update व्हावेत म्हणून
-    window.dispatchEvent(new Event("transactionUpdated"));
-
-    alert(
-      editId
-        ? "Transaction updated successfully!"
-        : "Transaction added successfully!",
-    );
-
-    handleReset();
   };
 
   /* =====================================================

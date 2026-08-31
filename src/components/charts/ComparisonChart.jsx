@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -15,35 +15,85 @@ import {
 
 import "../../css/Charts.css";
 
-// एकच FULL-WIDTH chart card:
-//   PIE  -> Income, Expense & Saving/Loss Comparison (bar)
-//   BAR  -> Monthly Trends (line)
-
-function ComparisonChart() {
-  const [transactions, setTransactions] = useState([]);
-
-  const [chartType, setChartType] = useState("PIE"); // PIE | BAR
-  const [viewMode, setViewMode] = useState("Month"); // Month | Year
-  const [typeFilter, setTypeFilter] = useState("All"); // All | Income | Expense
-
-  const loadTransactions = () => {
-    const saved = JSON.parse(localStorage.getItem("transactions")) || [];
-    setTransactions(saved);
-  };
-
-  useEffect(() => {
-    loadTransactions();
-    window.addEventListener("storage", loadTransactions);
-    window.addEventListener("focus", loadTransactions);
-    window.addEventListener("transactionUpdated", loadTransactions);
-    return () => {
-      window.removeEventListener("storage", loadTransactions);
-      window.removeEventListener("focus", loadTransactions);
-      window.removeEventListener("transactionUpdated", loadTransactions);
-    };
-  }, []);
+function ComparisonChart({ timeframe = "Monthly", transactions = [] }) {
+  const [chartType, setChartType] = useState("PIE");
+  const [typeFilter, setTypeFilter] = useState("All");
 
   const getAmount = (item) => Number(item.total || item.amount || 0);
+
+  const getTransactionDate = (item) => {
+    if (!item.date) return null;
+
+    const date = new Date(item.date);
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    date.setHours(0, 0, 0, 0);
+
+    return date;
+  };
+
+  const today = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }, []);
+
+  /*=========================
+       TIMEFRAME FILTER
+   =========================*/
+
+  const filteredTransactions = useMemo(() => {
+    if (timeframe === "All") {
+      return transactions;
+    }
+
+    if (timeframe === "Yearly") {
+      return transactions.filter((item) => {
+        const date = getTransactionDate(item);
+
+        if (!date) return false;
+
+        return date.getFullYear() === today.getFullYear();
+      });
+    }
+
+    if (timeframe === "Monthly") {
+      return transactions.filter((item) => {
+        const date = getTransactionDate(item);
+
+        if (!date) return false;
+
+        return (
+          date.getMonth() === today.getMonth() &&
+          date.getFullYear() === today.getFullYear()
+        );
+      });
+    }
+
+    if (timeframe === "Weekly") {
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+
+      return transactions.filter((item) => {
+        const date = getTransactionDate(item);
+
+        if (!date) return false;
+
+        return date >= weekStart && date <= weekEnd;
+      });
+    }
+
+    return transactions;
+  }, [transactions, timeframe, today]);
+
+  /* =========================
+         MONTHLY DATA
+     =========================*/
 
   const months = [
     "Jan",
@@ -61,9 +111,13 @@ function ComparisonChart() {
   ];
 
   const monthData = months.map((month, index) => {
-    const list = transactions.filter(
-      (item) => item.date && new Date(item.date).getMonth() === index,
-    );
+    const list = filteredTransactions.filter((item) => {
+      const date = getTransactionDate(item);
+
+      if (!date) return false;
+
+      return date.getMonth() === index;
+    });
 
     const income = list
       .filter((item) => item.type === "Income")
@@ -73,111 +127,194 @@ function ComparisonChart() {
       .filter((item) => item.type === "Expense")
       .reduce((sum, item) => sum + getAmount(item), 0);
 
-    return { month, income, expense, savings: income - expense };
+    return {
+      month,
+      income,
+      expense,
+      savings: income - expense,
+    };
   });
 
+  /*
+   * =========================
+   * YEARLY DATA
+   * =========================
+   */
+
   const yearMap = {};
-  transactions.forEach((item) => {
-    if (!item.date) return;
-    const year = String(new Date(item.date).getFullYear());
-    if (!yearMap[year]) yearMap[year] = { year, income: 0, expense: 0 };
-    if (item.type === "Income") yearMap[year].income += getAmount(item);
-    if (item.type === "Expense") yearMap[year].expense += getAmount(item);
+
+  filteredTransactions.forEach((item) => {
+    const date = getTransactionDate(item);
+
+    if (!date) return;
+
+    const year = String(date.getFullYear());
+
+    if (!yearMap[year]) {
+      yearMap[year] = {
+        year,
+        income: 0,
+        expense: 0,
+      };
+    }
+
+    if (item.type === "Income") {
+      yearMap[year].income += getAmount(item);
+    }
+
+    if (item.type === "Expense") {
+      yearMap[year].expense += getAmount(item);
+    }
   });
 
   const yearData = Object.values(yearMap)
-    .map((d) => ({ ...d, savings: d.income - d.expense }))
+    .map((item) => ({
+      ...item,
+      savings: item.income - item.expense,
+    }))
     .sort((a, b) => a.year.localeCompare(b.year));
 
-  const data = viewMode === "Month" ? monthData : yearData;
-  const xKey = viewMode === "Month" ? "month" : "year";
+  /*
+   * =========================
+   * WEEKLY DATA
+   * =========================
+   */
+
+  const weeklyIncome = filteredTransactions
+    .filter((item) => item.type === "Income")
+    .reduce((sum, item) => sum + getAmount(item), 0);
+
+  const weeklyExpense = filteredTransactions
+    .filter((item) => item.type === "Expense")
+    .reduce((sum, item) => sum + getAmount(item), 0);
+
+  const weeklyData = [
+    {
+      period: "This Week",
+      income: weeklyIncome,
+      expense: weeklyExpense,
+      savings: weeklyIncome - weeklyExpense,
+    },
+  ];
+
+  /*
+   * =========================
+   * ALL TIME DATA
+   * =========================
+   */
+
+  const allIncome = filteredTransactions
+    .filter((item) => item.type === "Income")
+    .reduce((sum, item) => sum + getAmount(item), 0);
+
+  const allExpense = filteredTransactions
+    .filter((item) => item.type === "Expense")
+    .reduce((sum, item) => sum + getAmount(item), 0);
+
+  const allData = [
+    {
+      period: "All Time",
+      income: allIncome,
+      expense: allExpense,
+      savings: allIncome - allExpense,
+    },
+  ];
+
+  /*
+   * =========================
+   * SELECT CHART DATA
+   * =========================
+   */
+
+  let data = monthData;
+  let xKey = "month";
+
+  if (timeframe === "Yearly") {
+    data = yearData;
+    xKey = "year";
+  }
+
+  if (timeframe === "Weekly") {
+    data = weeklyData;
+    xKey = "period";
+  }
+
+  if (timeframe === "All") {
+    data = allData;
+    xKey = "period";
+  }
 
   const showIncome = typeFilter !== "Expense";
   const showExpense = typeFilter !== "Income";
   const showSavings = typeFilter === "All";
 
+  const title =
+    timeframe === "Monthly"
+      ? "Income, Expense & Saving/Loss Comparison"
+      : `Income, Expense & Saving/Loss - ${timeframe}`;
+
   return (
     <div className="chart-card">
       <div className="chart-card-header">
         <div>
-          <h3>
-            {chartType === "PIE"
-              ? "Income, Expense & Saving/Loss Comparison"
-              : "Monthly Trends"}
-          </h3>
-          <p>
-            {chartType === "PIE"
-              ? "Monthly income, expense and savings comparison"
-              : "Income, Expense & Saving/Loss overview"}
-          </p>
-        </div>
+          <h3>{title}</h3>
 
-        {/* PIE | BAR - नेहमी उजवीकडे */}
+          <p>Monthly income, expense and savings comparison</p>
+        </div>
 
         <div className="chart-toggle-group">
           <button
             className={chartType === "PIE" ? "active" : ""}
             onClick={() => setChartType("PIE")}
           >
-            PIE
+            BAR
           </button>
+
           <button
             className={chartType === "BAR" ? "active" : ""}
             onClick={() => setChartType("BAR")}
           >
-            BAR
+            LINE
           </button>
         </div>
       </div>
 
-      {/* Month/Year + filters - फक्त PIE view मध्ये, header खाली */}
+      <div className="chart-controls chart-controls-row">
+        <div className="chart-toggle-group">
+          <button
+            className={typeFilter === "All" ? "active" : ""}
+            onClick={() => setTypeFilter("All")}
+          >
+            All
+          </button>
 
-      {chartType === "PIE" && (
-        <div className="chart-controls chart-controls-row">
-          <div className="chart-toggle-group">
-            <button
-              className={viewMode === "Month" ? "active" : ""}
-              onClick={() => setViewMode("Month")}
-            >
-              Month
-            </button>
-            <button
-              className={viewMode === "Year" ? "active" : ""}
-              onClick={() => setViewMode("Year")}
-            >
-              Year
-            </button>
-          </div>
+          <button
+            className={typeFilter === "Income" ? "active" : ""}
+            onClick={() => setTypeFilter("Income")}
+          >
+            Income Only
+          </button>
 
-          <div className="chart-toggle-group">
-            <button
-              className={typeFilter === "All" ? "active" : ""}
-              onClick={() => setTypeFilter("All")}
-            >
-              All
-            </button>
-            <button
-              className={typeFilter === "Income" ? "active" : ""}
-              onClick={() => setTypeFilter("Income")}
-            >
-              Income Only
-            </button>
-            <button
-              className={typeFilter === "Expense" ? "active" : ""}
-              onClick={() => setTypeFilter("Expense")}
-            >
-              Expense Only
-            </button>
-          </div>
+          <button
+            className={typeFilter === "Expense" ? "active" : ""}
+            onClick={() => setTypeFilter("Expense")}
+          >
+            Expense Only
+          </button>
         </div>
-      )}
+      </div>
 
       <div className="chart-area">
         <ResponsiveContainer width="100%" height={300}>
           {chartType === "PIE" ? (
             <BarChart
               data={data}
-              margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+              margin={{
+                top: 10,
+                right: 10,
+                left: 0,
+                bottom: 5,
+              }}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
@@ -223,10 +360,10 @@ function ComparisonChart() {
                   radius={[5, 5, 0, 0]}
                   barSize={12}
                 >
-                  {data.map((d, i) => (
+                  {data.map((item, index) => (
                     <Cell
-                      key={`sav-${i}`}
-                      fill={d.savings >= 0 ? "#6366F1" : "#F59E0B"}
+                      key={`saving-${index}`}
+                      fill={item.savings >= 0 ? "#6366F1" : "#F59E0B"}
                     />
                   ))}
                 </Bar>
@@ -234,12 +371,17 @@ function ComparisonChart() {
             </BarChart>
           ) : (
             <LineChart
-              data={monthData}
-              margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
+              data={data}
+              margin={{
+                top: 10,
+                right: 10,
+                left: 0,
+                bottom: 5,
+              }}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
 
               <YAxis
                 tick={{ fontSize: 11 }}

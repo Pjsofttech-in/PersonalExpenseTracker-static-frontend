@@ -30,20 +30,13 @@
 .settings-menu {
   width: 230px;
   min-width: 230px;
-
   background: #6495ed;
-
   border-radius: 0 28px 28px 0;
-
   padding: 8px 6px;
-
   display: flex;
   flex-direction: column;
-
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-
   overflow: hidden;
-
   transition: all 0.3s ease;
 }
 
@@ -52,28 +45,18 @@
 .settings-menu button {
   width: 100%;
   height: 52px;
-
   border: none;
   background: transparent;
-
   display: flex;
   align-items: center;
-
   gap: 15px;
-
   padding: 0 18px;
-
   border-radius: 26px;
-
   color: white;
-
   font-size: 15px;
   font-weight: 500;
-
   cursor: pointer;
-
   transition: all 0.25s ease;
-
   white-space: nowrap;
 }
 
@@ -95,7 +78,6 @@
 .settings-menu button.menu-active {
   background: white;
   color: #222;
-
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
@@ -125,17 +107,11 @@
 .settings-main {
   flex: 1;
   min-width: 0;
-
   background: #ffffff;
-
   border: 1px solid #e1e5eb;
-
   border-radius: 10px;
-
   padding: 22px;
-
   box-sizing: border-box;
-
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
 }
 
@@ -149,28 +125,21 @@
 
 .section-top {
   display: flex;
-
   justify-content: space-between;
   align-items: center;
-
   margin-bottom: 22px;
 }
 
 .section-top h2 {
   margin: 0 0 4px;
-
   color: #222;
-
   font-size: 21px;
-
   font-weight: 600;
 }
 
 .section-top p {
   margin: 0;
-
   color: #777;
-
   font-size: 13px;
 }
 
@@ -180,37 +149,23 @@
 
 .add-btn {
   height: 42px;
-
   padding: 0 18px;
-
   border: none;
-
   border-radius: 6px;
-
   background: #1976d2;
-
   color: white;
-
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   gap: 8px;
-
   font-size: 13px;
-
   font-weight: 600;
-
   cursor: pointer;
-
   transition: 0.2s;
 }
 
 .add-btn:hover {
   background: #1565c0;
-
   transform: translateY(-1px);
 }
 
@@ -220,38 +175,32 @@
 
 .search-total {
   display: flex;
-
   align-items: center;
-
   gap: 15px;
-
   margin-bottom: 18px;
 }
 
 .search-total input {
   width: 270px;
-
   height: 42px;
-
   border: 1px solid #cfd4dc;
-
   border-radius: 7px;
-
   padding: 0 14px;
-
   box-sizing: border-box;
-
   outline: none;
-
   font-family: inherit;
-
   font-size: 13px;
 }
 
 .search-total input:focus {
   border-color: #1976d2;
-
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.08);
+}
+
+/* ADD BUTTON — search + total row मध्ये (उजवीकडे) */
+
+.search-total .add-btn {
+  margin-left: auto;
 }
 
 /* =========================================
@@ -260,23 +209,14 @@
 
 .total-badge {
   height: 42px;
-
   padding: 0 16px;
-
   display: flex;
-
   align-items: center;
-
   border: 1px solid #1976d2;
-
   border-radius: 22px;
-
   color: #1976d2;
-
   font-size: 13px;
-
   font-weight: 600;
-
   white-space: nowrap;
 }
 
@@ -286,13 +226,9 @@
 
 .settings-table {
   width: 100%;
-
   border: 1px solid #ddd;
-
   border-radius: 8px;
-
   overflow-x: auto;
-
   overflow-y: hidden;
 }
 
@@ -301,11 +237,8 @@
 .table-head,
 .table-data {
   min-width: 700px;
-
   display: grid;
-
   align-items: center;
-
   text-align: center;
 }
 
@@ -343,13 +276,9 @@
 
 .table-head {
   min-height: 42px;
-
   background: #6495ed;
-
   color: white;
-
   font-size: 13px;
-
   font-weight: 600;
 }
 
@@ -357,13 +286,9 @@
 
 .table-data {
   min-height: 50px;
-
   border-bottom: 1px solid #eeeeee;
-
   color: #333;
-
   font-size: 13px;
-
   background: #ffffff;
 }
 
@@ -385,20 +310,15 @@
 
 .actions {
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   gap: 18px;
 }
 
 .edit-icon,
 .delete-icon {
   cursor: pointer;
-
   font-size: 15px;
-
   transition: 0.2s;
 }
 
@@ -408,7 +328,6 @@
 
 .edit-icon:hover {
   transform: scale(1.15);
-
   color: #1d4ed8;
 }
 
@@ -418,7 +337,6 @@
 
 .delete-icon:hover {
   transform: scale(1.15);
-
   color: #b91c1c;
 }
 
@@ -428,15 +346,10 @@
 
 .empty-row {
   min-height: 80px;
-
   display: flex;
-
   justify-content: center;
-
   align-items: center;
-
   color: #888;
-
   font-size: 13px;
 }
 
@@ -446,21 +359,13 @@
 
 .settings-overlay {
   position: fixed;
-
   inset: 0;
-
   background: rgba(0, 0, 0, 0.45);
-
   display: flex;
-
   justify-content: center;
-
   align-items: center;
-
   z-index: 9999;
-
   padding: 20px;
-
   box-sizing: border-box;
 }
 
@@ -470,32 +375,23 @@
 
 .settings-modal {
   width: 500px;
-
   max-width: 100%;
-
   max-height: 90vh;
-
   overflow-y: auto;
-
   background: white;
-
   border-radius: 12px;
-
   box-shadow: 0 15px 45px rgba(0, 0, 0, 0.25);
-
   animation: popupShow 0.2s ease;
 }
 
 @keyframes popupShow {
   from {
     opacity: 0;
-
     transform: scale(0.95) translateY(10px);
   }
 
   to {
     opacity: 1;
-
     transform: scale(1) translateY(0);
   }
 }
@@ -506,57 +402,37 @@
 
 .modal-header {
   height: 65px;
-
   padding: 0 22px;
-
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
   border-bottom: 1px solid #eeeeee;
-
   box-sizing: border-box;
 }
 
 .modal-header h2 {
   margin: 0;
-
   font-size: 19px;
-
   color: #222;
-
   font-weight: 600;
 }
 
 .close-btn {
   width: 35px;
-
   height: 35px;
-
   border: none;
-
   border-radius: 50%;
-
   background: #f3f4f6;
-
   color: #555;
-
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   cursor: pointer;
-
   font-size: 15px;
 }
 
 .close-btn:hover {
   background: #fee2e2;
-
   color: #dc2626;
 }
 
@@ -566,53 +442,36 @@
 
 .modal-form {
   padding: 22px;
-
   display: flex;
-
   flex-direction: column;
-
   gap: 8px;
-
   box-sizing: border-box;
 }
 
 .modal-form label {
   color: #444;
-
   font-size: 13px;
-
   font-weight: 600;
-
   margin-top: 5px;
 }
 
 .modal-form input,
 .modal-form select {
   width: 100%;
-
   height: 42px;
-
   border: 1px solid #cfd4dc;
-
   border-radius: 7px;
-
   padding: 0 12px;
-
   box-sizing: border-box;
-
   outline: none;
-
   font-family: inherit;
-
   font-size: 13px;
-
   background: white;
 }
 
 .modal-form input:focus,
 .modal-form select:focus {
   border-color: #1976d2;
-
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.08);
 }
 
@@ -622,11 +481,8 @@
 
 .bank-form {
   display: grid;
-
   grid-template-columns: 1fr 1fr;
-
   column-gap: 15px;
-
   row-gap: 8px;
 }
 
@@ -652,33 +508,23 @@
 
 .modal-buttons {
   padding: 0 22px 22px;
-
   display: flex;
-
   justify-content: flex-end;
-
   gap: 12px;
 }
 
 .modal-buttons button {
   height: 40px;
-
   padding: 0 20px;
-
   border: none;
-
   border-radius: 6px;
-
   font-size: 13px;
-
   font-weight: 600;
-
   cursor: pointer;
 }
 
 .cancel-btn {
   background: #eeeeee;
-
   color: #444;
 }
 
@@ -688,7 +534,6 @@
 
 .save-btn {
   background: #1976d2;
-
   color: white;
 }
 
@@ -722,7 +567,6 @@
 
   .section-top {
     align-items: flex-start;
-
     gap: 15px;
   }
 

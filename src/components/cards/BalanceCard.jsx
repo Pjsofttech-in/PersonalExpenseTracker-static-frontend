@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FaArrowUp, FaArrowDown, FaPiggyBank, FaClock } from "react-icons/fa";
+import { loadTransactionsFromBackend } from "../../utils/backendData";
 
 import "../../css/Card.css";
 
@@ -7,11 +8,16 @@ function BalanceCard() {
   const [transactions, setTransactions] = useState([]);
 
   useEffect(() => {
-    const loadTransactions = () => {
-      const savedTransactions =
-        JSON.parse(localStorage.getItem("transactions")) || [];
+    // BACKEND वरून transactions load
 
-      setTransactions(savedTransactions);
+    const loadTransactions = async () => {
+      try {
+        const data = await loadTransactionsFromBackend();
+
+        setTransactions(data);
+      } catch (error) {
+        setTransactions([]);
+      }
     };
 
     loadTransactions();

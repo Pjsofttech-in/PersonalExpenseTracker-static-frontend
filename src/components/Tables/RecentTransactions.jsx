@@ -1,15 +1,24 @@
 import { useEffect, useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import {
+  loadTransactionsFromBackend,
+  deleteTransactionFromBackend,
+} from "../../utils/backendData";
 import "../../css/RecentTransactions.css";
 
 function RecentTransactions() {
   const [transactions, setTransactions] = useState([]);
 
-  const loadTransactions = () => {
-    const savedTransactions =
-      JSON.parse(localStorage.getItem("transactions")) || [];
+  // BACKEND वरून transactions load
 
-    setTransactions(savedTransactions);
+  const loadTransactions = async () => {
+    try {
+      const data = await loadTransactionsFromBackend();
+
+      setTransactions(data);
+    } catch (error) {
+      setTransactions([]);
+    }
   };
 
   useEffect(() => {
@@ -37,20 +46,24 @@ function RecentTransactions() {
   // DELETE
   // =========================================
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this transaction?",
     );
 
     if (!confirmDelete) return;
 
-    const updatedTransactions = transactions.filter((item) => item.id !== id);
+    try {
+      // BACKEND DELETE
 
-    localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
+      await deleteTransactionFromBackend(id);
 
-    setTransactions(updatedTransactions);
+      setTransactions(transactions.filter((item) => item.id !== id));
 
-    window.dispatchEvent(new Event("transactionUpdated"));
+      window.dispatchEvent(new Event("transactionUpdated"));
+    } catch (error) {
+      alert(error.message || "Could not delete. Is the backend running?");
+    }
   };
 
   // =========================================
@@ -60,7 +73,7 @@ function RecentTransactions() {
   const handleEdit = (item) => {
     localStorage.setItem("editTransaction", JSON.stringify(item));
 
-    window.location.href = "/add-income";
+    window.location.href = "/income/add";
   };
 
   // =========================================
