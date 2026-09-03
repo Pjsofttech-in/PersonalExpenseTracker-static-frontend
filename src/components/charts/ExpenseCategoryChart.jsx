@@ -115,7 +115,6 @@ function ExpenseCategoryChart({ timeframe = "Monthly", transactions = [] }) {
       <div className="expense-category-header">
         <div>
           <h3>Expenses by Category</h3>
-          <p>Category-wise expense distribution</p>
         </div>
 
         <div className="chart-controls">

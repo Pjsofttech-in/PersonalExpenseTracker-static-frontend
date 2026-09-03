@@ -21,6 +21,7 @@ function List() {
 
   const [filters, setFilters] = useState({
     type: "",
+    assetType: "All",
     timeframe: "All",
     billType: "All",
     category: "All",
@@ -108,8 +109,6 @@ function List() {
       [name]: value,
     }));
 
-    // FILTER बदललं की पहिल्या page वर परत
-
     setCurrentPage(1);
   };
 
@@ -138,6 +137,14 @@ function List() {
       filters.type &&
       filters.type !== "All" &&
       transaction.type !== filters.type
+    ) {
+      return false;
+    }
+
+    if (
+      filters.assetType &&
+      filters.assetType !== "All" &&
+      !(transaction.notes || "").includes(`[${filters.assetType}]`)
     ) {
       return false;
     }
@@ -271,9 +278,6 @@ function List() {
 
   const getAmount = (item) => Number(item.total || item.amount || 0);
 
-  // FIX: Payment Status "Complete" असेल तर पूर्ण amount paid आहे
-  // (आधी Complete transaction साठीही Paid ₹0 दिसत होता)
-
   const getPaid = (item) => {
     if (item.paymentStatus === "Complete") {
       return getAmount(item);
@@ -366,6 +370,16 @@ function List() {
     .filter((item) => item.type === "Income")
     .reduce((sum, item) => sum + getAmount(item), 0);
 
+  const totalExpense = filteredTransactions
+    .filter((item) => item.type === "Expense")
+    .reduce((sum, item) => sum + getAmount(item), 0);
+
+  // Profit / Loss — Income वजा Expense
+
+  const profitLoss = totalIncome - totalExpense;
+
+  const isProfit = profitLoss >= 0;
+
   // =========================
   // DOWNLOAD PDF (संपूर्ण list)
   // =========================
@@ -456,9 +470,6 @@ function List() {
     doc.setDrawColor(200);
     doc.line(20, 26, 190, 26);
 
-    // FIX: jsPDF default fonts "₹" support करत नाहीत (garbage print होत),
-    // म्हणून PDF मध्ये "Rs." वापरला आहे
-
     const fields = [
       ["Date", item.date || "-"],
       ["Transaction ID", item.transactionId || "-"],
@@ -527,7 +538,7 @@ function List() {
 
       setTransactions(transactions.filter((item) => item.id !== id));
 
-      // FIX: Dashboard / Recent Transactions लगेच sync व्हावेत म्हणून
+      // FIX: Dashboard / Recent Transactions
 
       window.dispatchEvent(new Event("transactionUpdated"));
     } catch (error) {
@@ -536,13 +547,13 @@ function List() {
   };
 
   // =========================
-  // EDIT (user name वर double click ने पण)
+  // EDIT
   // =========================
 
   const handleEdit = (item) => {
     localStorage.setItem("editTransaction", JSON.stringify(item));
 
-    // TopNavigation मधल्या route प्रमाणे - कोणत्याही router ला चालतो
+    // TopNavigation
     navigate("/income/add");
   };
 
@@ -588,12 +599,6 @@ function List() {
   const handleAddInstallment = (e) => {
     e.preventDefault();
 
-    /* BACKEND MODE: installments transaction तयार
-       करतानाच schedule मध्ये set होतात (backend ला
-       add-installment endpoint नाही). नवीन
-       installment हवा असेल तर transaction edit
-       करा. */
-
     alert(
       "Installments are set when the transaction is created (2 auto installments). To change them, edit the transaction.",
     );
@@ -634,18 +639,12 @@ function List() {
     if (targetInst.status === "Completed") return;
 
     try {
-      /* BACKEND PAYMENT — installment वर amount
-         जातो, backend status update करतो */
-
       await payInstallmentOnBackend(
         instId,
         targetInst.amount,
         todayStr,
         payTxnId.trim(),
       );
-
-      /* Backend वरून पुन्हा सगळं load (paid/pending
-         + status backend compute करतो) */
 
       const refreshed = await loadTransactionsFromBackend();
 
@@ -674,29 +673,27 @@ function List() {
   return (
     <div className="list-page">
       {/* =========================
-          SEARCH
-      ========================= */}
-
-      <div className="list-search-section">
-        <input
-          type="text"
-          value={filters.search}
-          placeholder="Search User, Category, Particular, Bill Type, Payment Method..."
-          onChange={(e) => handleFilterChange("search", e.target.value)}
-        />
-
-        {filters.search && (
-          <button onClick={() => handleFilterChange("search", "")}>
-            Clear
-          </button>
-        )}
-      </div>
-
-      {/* =========================
-          FILTER SECTION
+          FILTER SECTION (SEARCH + बाकी फिल्टर शेजारी शेजारी)
       ========================= */}
 
       <div className="filter-section">
+        {/* SEARCH — Type च्या आधी */}
+
+        <div className="list-search-section">
+          <input
+            type="text"
+            value={filters.search}
+            placeholder="Search..."
+            onChange={(e) => handleFilterChange("search", e.target.value)}
+          />
+
+          {filters.search && (
+            <button onClick={() => handleFilterChange("search", "")}>
+              Clear
+            </button>
+          )}
+        </div>
+
         <select
           value={filters.type}
           onChange={(e) => handleFilterChange("type", e.target.value)}
@@ -709,11 +706,28 @@ function List() {
           <option value="Expense">Expense</option>
         </select>
 
+        {/* ASSET / LIABILITY — निवडल्यावर तेवढेच entries */}
+
+        <select
+          value={filters.assetType}
+          onChange={(e) => handleFilterChange("assetType", e.target.value)}
+        >
+          <option value="" disabled hidden>
+            Asset / Liability
+          </option>
+          <option value="All">All</option>
+          <option value="Asset">Asset</option>
+          <option value="Liability">Liability</option>
+        </select>
+
         <select
           value={filters.timeframe}
           onChange={(e) => handleFilterChange("timeframe", e.target.value)}
         >
-          <option value="All">Timeframe</option>
+          <option value="" disabled hidden>
+            Timeframe
+          </option>
+          <option value="All">All</option>
           <option value="Today">Today</option>
           <option value="This Week">This Week</option>
           <option value="This Month">This Month</option>
@@ -765,6 +779,8 @@ function List() {
           <option value="Income Refund">Income Refund</option>
         </select>
 
+        {/* USER — परत add, Search लहान करून जागा */}
+
         <select
           value={filters.user}
           onChange={(e) => handleFilterChange("user", e.target.value)}
@@ -776,33 +792,6 @@ function List() {
               {user.username}
             </option>
           ))}
-        </select>
-
-        <select
-          value={filters.department}
-          onChange={(e) => handleFilterChange("department", e.target.value)}
-        >
-          <option value="All">Department</option>
-          <option value="Admin">Admin</option>
-          <option value="Accounts">Accounts</option>
-        </select>
-
-        <select
-          value={filters.staff}
-          onChange={(e) => handleFilterChange("staff", e.target.value)}
-        >
-          <option value="All">Staff</option>
-          <option value="Staff 1">Staff 1</option>
-          <option value="Staff 2">Staff 2</option>
-        </select>
-
-        <select
-          value={filters.messageType}
-          onChange={(e) => handleFilterChange("messageType", e.target.value)}
-        >
-          <option value="All">Message Type</option>
-          <option value="SMS">SMS</option>
-          <option value="Email">Email</option>
         </select>
       </div>
 
@@ -852,11 +841,11 @@ function List() {
         <button className="check-btn">Check Mark Transactions</button>
 
         <button className="summary blue">
-          Total GST: ₹{totalGST.toLocaleString("en-IN")}
+          GST: ₹{totalGST.toLocaleString("en-IN")}
         </button>
 
         <button className="summary purple">
-          Total TDS: ₹{totalTDS.toLocaleString("en-IN")}
+          TDS: ₹{totalTDS.toLocaleString("en-IN")}
         </button>
 
         <button className="summary green">
@@ -875,8 +864,21 @@ function List() {
           Expense Refund: ₹{expenseRefund.toLocaleString("en-IN")}
         </button>
 
+        {/* PROFIT / LOSS — Income च्या पुढे, green = Profit / red = Loss */}
+
+        <button className={isProfit ? "summary profit" : "summary loss"}>
+          {isProfit ? "Profit" : "Loss"}: ₹
+          {Math.abs(profitLoss).toLocaleString("en-IN")}
+        </button>
+
+        {/* EXPENSE — Income च्या आधी */}
+
+        <button className="summary expense">
+          Expense: ₹{totalExpense.toLocaleString("en-IN")}
+        </button>
+
         <button className="summary income">
-          Total Income: ₹{totalIncome.toLocaleString("en-IN")}
+          Income: ₹{totalIncome.toLocaleString("en-IN")}
         </button>
       </div>
 
@@ -905,7 +907,6 @@ function List() {
             <span>Payment Mode</span>
             <span>Document</span>
             <span>Actions</span>
-            <span>Created By</span>
           </div>
 
           {filteredTransactions.length === 0 ? (
@@ -1023,12 +1024,6 @@ function List() {
                   >
                     🗑️
                   </button>
-                </span>
-
-                {/* CREATED BY -  */}
-
-                <span>
-                  <b className="created-by">Pune Branch</b>
                 </span>
               </div>
             ))

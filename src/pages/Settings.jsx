@@ -358,13 +358,6 @@ function Settings() {
 
           {activeTab === "categories" && (
             <div className="settings-section">
-              <div className="section-top">
-                <div>
-                  <h2>Categories</h2>
-                  <p>Manage your income and expense categories</p>
-                </div>
-              </div>
-
               <div className="search-total">
                 <input
                   type="text"
@@ -429,13 +422,6 @@ function Settings() {
 
           {activeTab === "users" && (
             <div className="settings-section">
-              <div className="section-top">
-                <div>
-                  <h2>Users</h2>
-                  <p>Manage users for your transactions</p>
-                </div>
-              </div>
-
               <div className="search-total">
                 <input
                   type="text"
@@ -503,13 +489,6 @@ function Settings() {
 
           {activeTab === "bankAccounts" && (
             <div className="settings-section">
-              <div className="section-top">
-                <div>
-                  <h2>Bank Accounts</h2>
-                  <p>Manage your bank accounts for payments</p>
-                </div>
-              </div>
-
               <div className="search-total">
                 <input
                   type="text"

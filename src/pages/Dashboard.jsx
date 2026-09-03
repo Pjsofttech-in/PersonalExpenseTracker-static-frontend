@@ -2,18 +2,18 @@ import { useEffect, useState } from "react";
 
 import BalanceCard from "../components/cards/BalanceCard";
 import ComparisonChart from "../components/charts/ComparisonChart";
+import AssetsLiabilityChart from "../components/charts/AssetsLiabilityChart";
 import IncomeCategoryChart from "../components/charts/IncomeCategoryChart";
-import ExpenseCategoryChart from "../components/charts/ExpenseCategoryChart";
 import RecentTransactions from "../components/Tables/RecentTransactions";
 import { loadTransactionsFromBackend } from "../utils/backendData";
 
 import "../css/Dashboard.css";
 
 function Dashboard() {
-  const [timeframe, setTimeframe] = useState("Monthly");
-  const [transactions, setTransactions] = useState([]);
+  const [timeframe, setTimeframe] = useState("");
 
-  // BACKEND वरून transactions load
+  const activeTimeframe = timeframe || "Monthly";
+  const [transactions, setTransactions] = useState([]);
 
   const loadTransactions = async () => {
     try {
@@ -53,43 +53,27 @@ function Dashboard() {
         ========================= */}
 
         <div className="chart-full-row">
-          <ComparisonChart timeframe={timeframe} transactions={transactions} />
+          <ComparisonChart
+            timeframe={activeTimeframe}
+            transactions={transactions}
+            onTimeframeChange={setTimeframe}
+          />
         </div>
 
-        {/* =========================
-            TIMEFRAME
-        ========================= */}
-
-        <div className="dashboard-timeframe-section">
-          <div className="dashboard-timeframe-label">
-            <span>Timeframe</span>
-            <small>Filter income, expense and category charts</small>
-          </div>
-
-          <select
-            className="dashboard-timeframe-select"
-            value={timeframe}
-            onChange={(e) => setTimeframe(e.target.value)}
-          >
-            <option value="Monthly">Monthly</option>
-            <option value="Weekly">Weekly</option>
-            <option value="Yearly">Yearly</option>
-            <option value="All">All Time</option>
-          </select>
-        </div>
-
-        {/* =========================
-            CATEGORY CHARTS
-        ========================= */}
-
-        <div className="category-chart-row">
-          <IncomeCategoryChart
-            timeframe={timeframe}
+        <div className="chart-full-row">
+          <AssetsLiabilityChart
+            timeframe={activeTimeframe}
             transactions={transactions}
           />
+        </div>
 
-          <ExpenseCategoryChart
-            timeframe={timeframe}
+        {/* =========================
+            CATEGORY CHART (एकत्रित — Income / Expense / Assets & Liabilities)
+        ========================= */}
+
+        <div className="chart-full-row">
+          <IncomeCategoryChart
+            timeframe={activeTimeframe}
             transactions={transactions}
           />
         </div>

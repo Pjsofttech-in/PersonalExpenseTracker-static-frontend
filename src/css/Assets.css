@@ -1,0 +1,53 @@
+/* ASSET TABLE GRID */
+
+.asset-grid {
+  grid-template-columns:
+    45px
+    1.4fr
+    1fr
+    1fr
+    1.1fr
+    1.1fr
+    100px
+    1fr
+    110px;
+}
+
+/* CURRENT VALUE — वाढली तर हिरवी, घसरली तर लाल */
+
+.asset-value-up {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.asset-value-down {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* ASSETS PAGE — डावं menu नाही (Settings सारखं नाही) */
+
+.assets-only {
+  display: block;
+}
+
+/* MODAL ERROR */
+
+.modal-error {
+  background: #fdecea;
+  color: #c62828;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 12px;
+  margin-bottom: 10px;
+  font-family: "Poppins", sans-serif;
+}
+
+/* CATEGORY label मधली छोटी tip */
+
+.modal-form label small {
+  color: #94a3b8;
+  font-weight: 400;
+  font-size: 10px;
+}

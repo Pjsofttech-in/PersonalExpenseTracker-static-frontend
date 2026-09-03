@@ -16,6 +16,8 @@ import {
 import "../../css/Charts.css";
 
 function IncomeCategoryChart({ timeframe = "Monthly", transactions = [] }) {
+  const [view, setView] = useState("INCOME");
+
   const [chartMode, setChartMode] = useState("PIE");
 
   const getAmount = (item) => Number(item.total || item.amount || 0);
@@ -37,6 +39,10 @@ function IncomeCategoryChart({ timeframe = "Monthly", transactions = [] }) {
     date.setHours(0, 0, 0, 0);
     return date;
   }, []);
+
+  /*=========================
+       TIMEFRAME FILTER
+  =========================*/
 
   const filteredTransactions = useMemo(() => {
     if (timeframe === "All") {
@@ -81,11 +87,18 @@ function IncomeCategoryChart({ timeframe = "Monthly", transactions = [] }) {
     return transactions;
   }, [transactions, timeframe, today]);
 
+  /*=========================
+       CATEGORY DATA
+       (Income / Expense)
+  =========================*/
+
   const chartData = useMemo(() => {
+    const type = view === "INCOME" ? "Income" : "Expense";
+
     const categoryTotals = {};
 
     filteredTransactions
-      .filter((item) => item.type === "Income")
+      .filter((item) => item.type === type)
       .forEach((item) => {
         const category = item.category || "Other";
         const amount = getAmount(item);
@@ -93,11 +106,32 @@ function IncomeCategoryChart({ timeframe = "Monthly", transactions = [] }) {
         categoryTotals[category] = (categoryTotals[category] || 0) + amount;
       });
 
-    return Object.entries(categoryTotals).map(([name, value]) => ({
-      name,
-      value,
-    }));
-  }, [filteredTransactions]);
+    return Object.entries(categoryTotals)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredTransactions, view]);
+
+  /*=========================
+       VIEW CONFIG
+  =========================*/
+
+  const headerTitle =
+    view === "INCOME" ? "Income by Category" : "Expense by Category";
+
+  const headerDesc =
+    view === "INCOME"
+      ? "Category-wise income distribution"
+      : "Category-wise expense distribution";
+
+  const emptyMessage =
+    view === "INCOME"
+      ? "No income data available"
+      : "No expense data available";
+
+  const emptyHint =
+    view === "INCOME"
+      ? "Add an income to see the category chart."
+      : "Add an expense to see the category chart.";
 
   const formatAmount = (value) => `₹${Number(value).toLocaleString("en-IN")}`;
 
@@ -111,36 +145,55 @@ function IncomeCategoryChart({ timeframe = "Monthly", transactions = [] }) {
   ];
 
   return (
-    <div className="expense-category-card">
-      <div className="expense-category-header">
+    <div className="chart-card">
+      <div className="chart-card-header">
         <div>
-          <h3>Income by Category</h3>
-          <p>Category-wise income distribution</p>
+          <h3>{headerTitle}</h3>
+
+          <p>{headerDesc}</p>
         </div>
 
-        <div className="chart-controls">
-          <div className="chart-toggle-group">
-            <button
-              className={chartMode === "PIE" ? "active" : ""}
-              onClick={() => setChartMode("PIE")}
-            >
-              PIE
-            </button>
+        <div className="chart-toggle-group">
+          <button
+            className={chartMode === "PIE" ? "active" : ""}
+            onClick={() => setChartMode("PIE")}
+          >
+            PIE
+          </button>
 
-            <button
-              className={chartMode === "BAR" ? "active" : ""}
-              onClick={() => setChartMode("BAR")}
-            >
-              BAR
-            </button>
-          </div>
+          <button
+            className={chartMode === "BAR" ? "active" : ""}
+            onClick={() => setChartMode("BAR")}
+          >
+            BAR
+          </button>
+        </div>
+      </div>
+
+      {/* VIEW TABS — Income / Expense */}
+
+      <div className="chart-controls">
+        <div className="chart-toggle-group">
+          <button
+            className={view === "INCOME" ? "active" : ""}
+            onClick={() => setView("INCOME")}
+          >
+            Income by Category
+          </button>
+
+          <button
+            className={view === "EXPENSE" ? "active" : ""}
+            onClick={() => setView("EXPENSE")}
+          >
+            Expense by Category
+          </button>
         </div>
       </div>
 
       {chartData.length === 0 ? (
         <div className="expense-empty">
-          <p>No income data available</p>
-          <span>Add an income to see the category chart.</span>
+          <p>{emptyMessage}</p>
+          <span>{emptyHint}</span>
         </div>
       ) : (
         <div className="expense-chart-wrapper">
@@ -201,7 +254,7 @@ function IncomeCategoryChart({ timeframe = "Monthly", transactions = [] }) {
 
                 <Bar
                   dataKey="value"
-                  name="Income"
+                  name={view === "INCOME" ? "Income" : "Expense"}
                   radius={[0, 6, 6, 0]}
                   barSize={18}
                 >

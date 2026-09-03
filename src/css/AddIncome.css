@@ -5,13 +5,9 @@
 .add-income-page {
   width: 100%;
   min-height: calc(100vh - 120px);
-
   box-sizing: border-box;
-
-  padding: 18px 14px 40px;
-
+  padding: 10px 12px 40px;
   background: #f5f7fb;
-
   font-family: "Poppins", sans-serif;
 }
 
@@ -25,19 +21,14 @@
 
 .add-income-title h2 {
   margin: 0;
-
   color: #222;
-
   font-size: 21px;
-
   font-weight: 600;
 }
 
 .add-income-title p {
   margin: 4px 0 0;
-
   color: #777;
-
   font-size: 12px;
 }
 
@@ -47,21 +38,13 @@
 
 .form-error {
   width: 100%;
-
   box-sizing: border-box;
-
   margin-bottom: 12px;
-
   padding: 9px 12px;
-
   background: #fee2e2;
-
   border: 1px solid #fecaca;
-
   border-radius: 6px;
-
   color: #b91c1c;
-
   font-size: 12px;
 }
 
@@ -72,27 +55,18 @@
 .income-expense-form {
   width: 100%;
   max-width: none;
-
   box-sizing: border-box;
-
   background: #fff;
-
   border: 1px solid #ddd;
-
   border-radius: 8px;
-
-  padding: 18px 14px 20px;
-
+  padding: 14px 12px 16px;
   display: grid;
-
   grid-template-columns:
     minmax(180px, 1fr)
     minmax(180px, 1fr)
     minmax(180px, 1fr)
     minmax(180px, 1fr);
-
-  gap: 14px;
-
+  gap: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
@@ -102,48 +76,31 @@
 
 .floating-field {
   width: 100%;
-
   min-width: 0;
-
   display: flex;
-
   flex-direction: column;
-
   position: relative;
 }
 
 .floating-field label {
   font-size: 12px;
-
   color: #555;
-
   margin-bottom: 5px;
-
   font-weight: 500;
 }
 
 .floating-field input,
 .floating-field select {
   width: 100%;
-
   height: 42px;
-
   box-sizing: border-box;
-
   border: 1px solid #c8c8c8;
-
   border-radius: 6px;
-
   background: #fff;
-
   padding: 0 12px;
-
   outline: none;
-
   font-family: "Poppins", sans-serif;
-
   font-size: 13px;
-
   color: #333;
 }
 
@@ -164,31 +121,18 @@
 
 .select-search-box {
   width: 100%;
-
   height: 42px;
-
   box-sizing: border-box;
-
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
   padding: 0 12px;
-
   background: #fff;
-
   border: 1px solid #c8c8c8;
-
   border-radius: 6px;
-
   cursor: pointer;
-
   font-family: "Poppins", sans-serif;
-
   font-size: 13px;
-
   transition: 0.2s;
 }
 
@@ -198,11 +142,8 @@
 
 .selected-value {
   color: #333;
-
   white-space: nowrap;
-
   overflow: hidden;
-
   text-overflow: ellipsis;
 }
 
@@ -212,9 +153,7 @@
 
 .select-arrow {
   color: #666;
-
   font-size: 9px;
-
   margin-left: 8px;
 }
 
@@ -224,27 +163,16 @@
 
 .search-dropdown {
   position: absolute;
-
   top: 68px;
-
   left: 0;
-
   width: 100%;
-
   max-height: 225px;
-
   overflow-y: auto;
-
   background: #fff;
-
   border: 1px solid #d5d5d5;
-
   border-radius: 6px;
-
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-
   z-index: 9999;
-
   padding: 5px 0;
 }
 
@@ -254,25 +182,15 @@
 
 .dropdown-search-input {
   width: calc(100% - 16px);
-
   height: 36px;
-
   margin: 5px 8px 7px;
-
   box-sizing: border-box;
-
   padding: 0 10px;
-
   border: 1px solid #c8c8c8;
-
   border-radius: 5px;
-
   outline: none;
-
   font-family: "Poppins", sans-serif;
-
   font-size: 12px;
-
   color: #333;
 }
 
@@ -286,15 +204,10 @@
 
 .dropdown-item {
   padding: 9px 12px;
-
   font-size: 13px;
-
   color: #333;
-
   cursor: pointer;
-
   border-bottom: 1px solid #f1f1f1;
-
   transition: 0.15s;
 }
 
@@ -304,17 +217,13 @@
 
 .select-option {
   color: #1976d2;
-
   font-weight: 500;
 }
 
 .dropdown-empty {
   padding: 12px;
-
   text-align: center;
-
   color: #888;
-
   font-size: 12px;
 }
 
@@ -324,41 +233,27 @@
 
 .tax-section {
   width: 100%;
-
   display: flex;
-
   align-items: flex-end;
-
   gap: 12px;
-
   min-width: 0;
 }
 
 .check-label {
   height: 42px;
-
   display: flex;
-
   align-items: center;
-
   gap: 6px;
-
   white-space: nowrap;
-
   font-size: 13px;
-
   color: #333;
 }
 
 .check-label input {
   width: 16px;
-
   height: 16px;
-
   margin: 0;
-
   accent-color: #1976d2;
-
   cursor: pointer;
 }
 
@@ -368,37 +263,25 @@
 
 .small-field {
   flex: 1;
-
   min-width: 70px;
-
   display: flex;
-
   flex-direction: column;
-
   gap: 5px;
 }
 
 .small-field label {
   font-size: 11px;
-
   color: #555;
 }
 
 .small-field input {
   width: 100%;
-
   height: 42px;
-
   box-sizing: border-box;
-
   padding: 0 9px;
-
   border: 1px solid #c8c8c8;
-
   border-radius: 6px;
-
   outline: none;
-
   font-size: 13px;
 }
 
@@ -416,25 +299,15 @@
 
 .notes-field textarea {
   width: 100%;
-
   min-height: 70px;
-
   box-sizing: border-box;
-
   padding: 10px 12px;
-
   border: 1px solid #c8c8c8;
-
   border-radius: 6px;
-
   resize: vertical;
-
   outline: none;
-
   font-family: "Poppins", sans-serif;
-
   font-size: 13px;
-
   color: #333;
 }
 
@@ -448,29 +321,19 @@
 
 .income-buttons {
   grid-column: 1 / -1;
-
   display: flex;
-
   justify-content: flex-end;
-
   gap: 10px;
-
   margin-top: 4px;
 }
 
 .cancel-btn {
   height: 38px;
-
   padding: 0 20px;
-
   border: none;
-
   background: transparent;
-
   color: #1976d2;
-
   font-size: 13px;
-
   cursor: pointer;
 }
 
@@ -480,23 +343,14 @@
 
 .save-btn {
   height: 38px;
-
   padding: 0 22px;
-
   border: none;
-
   border-radius: 5px;
-
   background: #1976d2;
-
   color: white;
-
   font-size: 13px;
-
   font-weight: 600;
-
   cursor: pointer;
-
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
 }
 
@@ -518,13 +372,56 @@
 
 .search-dropdown::-webkit-scrollbar-thumb {
   background: #c8c8c8;
-
   border-radius: 10px;
 }
 
 /* =========================================================
    RESPONSIVE
    ========================================================= */
+
+/* =========================================
+   TYPE + ASSET/LIABILITY ROW (side by side)
+========================================= */
+
+.type-row {
+  grid-column: auto / span 2;
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.type-row .floating-field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* =========================================
+   GST + TDS ROW (side by side, कमी gap)
+========================================= */
+
+.amount-tax-row {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  min-width: 0;
+}
+
+.amount-tax-row .floating-field {
+  flex: 0 1 22%;
+  min-width: 130px;
+}
+
+.amount-tax-row .tax-section {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.amount-tax-row .tax-section .small-field.gst-number {
+  flex: 1 1 110px;
+  min-width: 100px;
+}
 
 @media (max-width: 1100px) {
   .income-expense-form {
@@ -541,6 +438,18 @@
 @media (max-width: 550px) {
   .income-expense-form {
     grid-template-columns: 1fr;
+  }
+
+  .type-row,
+  .amount-tax-row {
+    grid-column: auto;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .amount-tax-row .floating-field {
+    flex: 0 0 auto;
+    width: 100%;
   }
 
   .notes-field {

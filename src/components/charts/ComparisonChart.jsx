@@ -15,7 +15,11 @@ import {
 
 import "../../css/Charts.css";
 
-function ComparisonChart({ timeframe = "Monthly", transactions = [] }) {
+function ComparisonChart({
+  timeframe = "Monthly",
+  transactions = [],
+  onTimeframeChange,
+}) {
   const [chartType, setChartType] = useState("PIE");
   const [typeFilter, setTypeFilter] = useState("All");
 
@@ -258,8 +262,6 @@ function ComparisonChart({ timeframe = "Monthly", transactions = [] }) {
       <div className="chart-card-header">
         <div>
           <h3>{title}</h3>
-
-          <p>Monthly income, expense and savings comparison</p>
         </div>
 
         <div className="chart-toggle-group">
@@ -302,6 +304,28 @@ function ComparisonChart({ timeframe = "Monthly", transactions = [] }) {
             Expense Only
           </button>
         </div>
+
+        {/* TIMEFRAME — box मध्ये "Timeframe" नाव, options आत (List page प्रमाणे) */}
+
+        <select
+          className="chart-timeframe-select"
+          value={timeframe}
+          onChange={(e) =>
+            onTimeframeChange && onTimeframeChange(e.target.value)
+          }
+        >
+          <option value="" disabled hidden>
+            Timeframe
+          </option>
+
+          <option value="Monthly">Monthly</option>
+
+          <option value="Weekly">Weekly</option>
+
+          <option value="Yearly">Yearly</option>
+
+          <option value="All">All Time</option>
+        </select>
       </div>
 
       <div className="chart-area">

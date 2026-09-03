@@ -105,6 +105,29 @@
 }
 
 /* =========================================
+   TIMEFRAME SELECT — toggle buttons शेजारी
+   (box स्वतः "Timeframe" नाव दाखवतो)
+========================================= */
+
+.chart-timeframe-select {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+}
+
+.chart-timeframe-select:focus {
+  border-color: #2563eb;
+}
+
+/* =========================================
    EMPTY STATE
 ========================================= */
 

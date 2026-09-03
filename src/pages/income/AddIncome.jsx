@@ -22,6 +22,7 @@ function AddIncome() {
 
   const [formData, setFormData] = useState({
     type: "Expense",
+    assetType: "",
     user: "",
     date: new Date().toISOString().split("T")[0],
     dueDate: "",
@@ -93,7 +94,8 @@ function AddIncome() {
   }, []);
 
   /* =====================================================
-     EDIT MODE 
+     EDIT MODE - List मधून double click ने आल्यावर
+     editTransaction असल्यास form आपोआप भरते
      ===================================================== */
 
   useEffect(() => {
@@ -101,11 +103,22 @@ function AddIncome() {
 
     if (!editTransaction) return;
 
+    /* NOTES मधला [Asset] / [Liability] tag वेगळा काढून घ्या */
+
+    const rawNotes = editTransaction.notes || "";
+
+    const assetMatch = rawNotes.match(/\s*\[(Asset|Liability)\]\s*$/i);
+
+    const cleanNotes = assetMatch
+      ? rawNotes.replace(/\s*\[(Asset|Liability)\]\s*$/i, "")
+      : rawNotes;
+
     setEditId(editTransaction.id || null);
 
     setFormData((prev) => ({
       ...prev,
       type: editTransaction.type || prev.type,
+      assetType: assetMatch ? assetMatch[1] : "",
       user: editTransaction.user || "",
       date: editTransaction.date || prev.date,
       dueDate: editTransaction.dueDate || "",
@@ -128,7 +141,7 @@ function AddIncome() {
       paymentMethod: editTransaction.paymentMethod || "",
       bankAccount: editTransaction.bankAccount || "",
       transactionId: editTransaction.transactionId || "",
-      notes: editTransaction.notes || "",
+      notes: cleanNotes,
     }));
   }, []);
 
@@ -291,12 +304,26 @@ function AddIncome() {
 
     setError("");
 
+    /* ASSET/LIBILITY + NOTES — tag notes मध्ये जातो
+       (List च्या Notes column मध्ये दिसतो) */
+
+    const cleanNotes = (formData.notes || "").replace(
+      /\s*\[(Asset|Liability)\]\s*$/i,
+      "",
+    );
+
+    const finalNotes = formData.assetType
+      ? cleanNotes + " [" + formData.assetType + "]"
+      : cleanNotes;
+
     /* BACKEND SAVE (add किंवा update) */
 
     try {
       await saveTransactionToBackend(
         {
           ...formData,
+
+          notes: finalNotes,
 
           transactionId: showTransactionId ? formData.transactionId.trim() : "",
 
@@ -336,6 +363,7 @@ function AddIncome() {
   const handleReset = () => {
     setFormData({
       type: "Expense",
+      assetType: "",
       user: "",
       date: new Date().toISOString().split("T")[0],
       dueDate: "",
@@ -374,32 +402,39 @@ function AddIncome() {
 
   return (
     <div className="add-income-page">
-      {/* PAGE TITLE */}
-
-      <div className="add-income-title">
-        <h2>{editId ? "Edit Income / Expense" : "Add Income / Expense"}</h2>
-        <p>
-          {editId
-            ? "Update your income or expense details"
-            : "Record your income or expense details"}
-        </p>
-      </div>
-
       {error && <div className="form-error">{error}</div>}
 
       {/* FORM */}
 
       <form className="income-expense-form" onSubmit={handleSubmit}>
-        {/* TYPE */}
+        {/* TYPE + ASSET/LIABILITY — शेजारी शेजारी */}
 
-        <div className="floating-field">
-          <label>Type</label>
+        <div className="type-row">
+          <div className="floating-field">
+            <label>Type</label>
 
-          <select name="type" value={formData.type} onChange={handleChange}>
-            <option value="Expense">Expense</option>
+            <select name="type" value={formData.type} onChange={handleChange}>
+              <option value="Expense">Expense</option>
 
-            <option value="Income">Income</option>
-          </select>
+              <option value="Income">Income</option>
+            </select>
+          </div>
+
+          <div className="floating-field">
+            <label>Asset / Liability</label>
+
+            <select
+              name="assetType"
+              value={formData.assetType}
+              onChange={handleChange}
+            >
+              <option value="">None</option>
+
+              <option value="Asset">Asset</option>
+
+              <option value="Liability">Liability</option>
+            </select>
+          </div>
         </div>
 
         {/* USER */}
@@ -565,104 +600,13 @@ function AddIncome() {
           />
         </div>
 
-        {/* AMOUNT */}
-
-        <div className="floating-field">
-          <label>Amount</label>
-
-          <input
-            type="number"
-            name="amount"
-            value={formData.amount}
-            onChange={handleChange}
-            placeholder="0"
-            min="0"
-          />
-        </div>
-
-        {/* GST */}
-
-        <div className="tax-section">
-          <label className="check-label">
-            <input
-              type="checkbox"
-              name="gstEnabled"
-              checked={formData.gstEnabled}
-              onChange={handleChange}
-            />
-
-            <span>GST</span>
-          </label>
-
-          {formData.gstEnabled && (
-            <>
-              <div className="small-field">
-                <label>GST %</label>
-
-                <input
-                  type="number"
-                  name="gstPercent"
-                  value={formData.gstPercent}
-                  onChange={handleChange}
-                  placeholder="%"
-                  min="0"
-                />
-              </div>
-
-              <div className="small-field gst-number">
-                <label>GST Number</label>
-
-                <input
-                  type="text"
-                  name="gstNumber"
-                  value={formData.gstNumber}
-                  onChange={handleChange}
-                  placeholder="GST Number"
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* TDS */}
-
-        <div className="tax-section">
-          <label className="check-label">
-            <input
-              type="checkbox"
-              name="tdsEnabled"
-              checked={formData.tdsEnabled}
-              onChange={handleChange}
-            />
-
-            <span>TDS</span>
-          </label>
-
-          {formData.tdsEnabled && (
-            <div className="small-field">
-              <label>TDS %</label>
-
-              <input
-                type="number"
-                name="tdsPercent"
-                value={formData.tdsPercent}
-                onChange={handleChange}
-                placeholder="%"
-                min="0"
-              />
-            </div>
-          )}
-        </div>
-
-        {/* TOTAL */}
+        {/* TOTAL + PAYMENT STATUS — Amount/GST/TDS च्या वरती */}
 
         <div className="floating-field">
           <label>Total</label>
 
           <input type="number" value={total.toFixed(2)} readOnly />
         </div>
-
-        {/* PAYMENT STATUS */}
 
         <div className="floating-field">
           <label>Payment Status</label>
@@ -680,6 +624,93 @@ function AddIncome() {
 
             <option value="Income Refund">Income Refund</option>
           </select>
+        </div>
+
+        {/* AMOUNT + GST + TDS — शेजारी शेजारी */}
+
+        <div className="amount-tax-row">
+          <div className="floating-field">
+            <label>Amount</label>
+
+            <input
+              type="number"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              placeholder="0"
+              min="0"
+            />
+          </div>
+
+          <div className="tax-section">
+            <label className="check-label">
+              <input
+                type="checkbox"
+                name="gstEnabled"
+                checked={formData.gstEnabled}
+                onChange={handleChange}
+              />
+
+              <span>GST</span>
+            </label>
+
+            {formData.gstEnabled && (
+              <>
+                <div className="small-field">
+                  <label>GST %</label>
+
+                  <input
+                    type="number"
+                    name="gstPercent"
+                    value={formData.gstPercent}
+                    onChange={handleChange}
+                    placeholder="%"
+                    min="0"
+                  />
+                </div>
+
+                <div className="small-field gst-number">
+                  <label>GST Number</label>
+
+                  <input
+                    type="text"
+                    name="gstNumber"
+                    value={formData.gstNumber}
+                    onChange={handleChange}
+                    placeholder="GST Number"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="tax-section">
+            <label className="check-label">
+              <input
+                type="checkbox"
+                name="tdsEnabled"
+                checked={formData.tdsEnabled}
+                onChange={handleChange}
+              />
+
+              <span>TDS</span>
+            </label>
+
+            {formData.tdsEnabled && (
+              <div className="small-field">
+                <label>TDS %</label>
+
+                <input
+                  type="number"
+                  name="tdsPercent"
+                  value={formData.tdsPercent}
+                  onChange={handleChange}
+                  placeholder="%"
+                  min="0"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* DUE DATE - फक्त Installment निवडल्यावर */}
@@ -796,7 +827,7 @@ function AddIncome() {
           </>
         )}
 
-        {/* NOTES */}
+        {/* NOTES — शेवटी, जुन्या जागी */}
 
         <div className="floating-field notes-field">
           <label>Notes</label>

@@ -12,10 +12,12 @@
 }
 
 .list-search-section {
-  width: 100%;
+  width: auto;
+  flex: 0 1 180px;
+  min-width: 130px;
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .list-search-section input {
@@ -54,14 +56,17 @@
 
 .filter-section {
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(150px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
 .filter-section select {
-  width: 100%;
+  width: auto;
+  min-width: 0;
+  flex: 0 1 auto;
   height: 38px;
   padding: 0 12px;
   border: 1px solid #bdbdbd;
@@ -122,6 +127,18 @@
   background: #2ec43b;
 }
 
+.summary.expense {
+  background: #ef5350;
+}
+
+.summary.profit {
+  background: #2fc43f;
+}
+
+.summary.loss {
+  background: #e53935;
+}
+
 .list-buttons {
   display: flex;
   align-items: center;
@@ -175,12 +192,12 @@
 }
 
 .list-table-header {
-  min-width: 1940px;
+  min-width: 1830px;
   height: 40px;
   display: grid;
   grid-template-columns:
     55px 90px 100px 130px 140px 85px 80px 80px 100px
-    80px 90px 110px 90px 90px 105px 105px 120px 85px 110px;
+    80px 90px 110px 90px 90px 105px 105px 120px 85px;
   align-items: center;
   background: #6495ed;
   color: white;
@@ -190,12 +207,12 @@
 }
 
 .list-table-row {
-  min-width: 1940px;
+  min-width: 1830px;
   min-height: 45px;
   display: grid;
   grid-template-columns:
     55px 90px 100px 130px 140px 85px 80px 80px 100px
-    80px 90px 110px 90px 90px 105px 105px 120px 85px 110px;
+    80px 90px 110px 90px 90px 105px 105px 120px 85px;
   align-items: center;
   text-align: center;
   font-size: 10px;
@@ -364,16 +381,12 @@
 }
 
 @media (max-width: 1100px) {
-  .filter-section {
-    grid-template-columns: repeat(3, 1fr);
+  .filter-section select {
+    flex: 1 1 auto;
   }
 }
 
 @media (max-width: 750px) {
-  .filter-section {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .list-page {
     padding: 8px;
   }
@@ -383,7 +396,7 @@
   }
 
   .list-search-section {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .list-search-section button {
@@ -392,10 +405,6 @@
 }
 
 @media (max-width: 500px) {
-  .filter-section {
-    grid-template-columns: 1fr;
-  }
-
   .list-buttons {
     flex-wrap: wrap;
   }

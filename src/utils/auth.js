@@ -1,3 +1,5 @@
+export const AUTH_ENABLED = true;
+
 const REGISTERED_USERS_KEY = "registeredUsers";
 const CURRENT_USER_KEY = "currentUser";
 
@@ -73,6 +75,8 @@ export const loginUser = (user, rememberMe) => {
 export const logoutUser = () => {
   localStorage.removeItem(CURRENT_USER_KEY);
   sessionStorage.removeItem(CURRENT_USER_KEY);
+
+  // BACKEND JWT TOKEN पण काढा
 
   localStorage.removeItem("pet_token");
 

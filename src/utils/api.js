@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 const TOKEN_KEY = "pet_token";
 
@@ -67,7 +67,7 @@ const request = async (path, { method = "GET", body, auth = true } = {}) => {
 };
 
 /* =========================================
-   AUTH API 
+   AUTH API
    ========================================= */
 
 /* REGISTER — body:
@@ -79,8 +79,6 @@ export const apiRegister = ({ name, phoneNumber, email, password }) =>
     body: { name, phoneNumber, email, password },
     auth: false,
   });
-
-/* LOGIN  */
 
 export const apiLogin = async (email, password) => {
   const response = await fetch(BASE_URL + "/pjsofttech_welcome/login", {
@@ -153,7 +151,7 @@ export const apiDeleteContact = (id) =>
   request("/pjsofttech/user/" + id, { method: "DELETE" });
 
 /* =========================================
-   EXPENSES (TRANSACTIONS) API 
+   EXPENSES (TRANSACTIONS) API
    ========================================= */
 
 export const apiGetExpenses = () => request("/pjsofttech/expense/expenses");
@@ -174,3 +172,54 @@ export const apiAddInstallmentPayment = (installmentId, payment) =>
     method: "POST",
     body: payment,
   });
+
+/* =========================================
+   ASSETS API — /api/assets
+   (नवीन backend — real Asset tracking)
+   ========================================= */
+
+export const apiGetAssets = () => request("/api/assets");
+
+export const apiAddAsset = (asset) =>
+  request("/api/assets", { method: "POST", body: asset });
+
+export const apiUpdateAsset = (id, asset) =>
+  request("/api/assets/" + id, { method: "PUT", body: asset });
+
+export const apiUpdateAssetValue = (id, currentValue) =>
+  request("/api/assets/" + id + "/valuation?currentValue=" + currentValue, {
+    method: "PUT",
+  });
+
+export const apiDeleteAsset = (id) =>
+  request("/api/assets/" + id, { method: "DELETE" });
+
+/* ASSET CATEGORY — POST /api/assets/assets-category */
+
+export const apiAddAssetCategory = (name) =>
+  request("/api/assets/assets-category", { method: "POST", body: { name } });
+
+/* =========================================
+   LIABILITIES API — /api/liabilities
+   (नवीन backend — real Liability tracking)
+   ========================================= */
+
+export const apiGetLiabilities = () => request("/api/liabilities");
+
+export const apiAddLiability = (liability) =>
+  request("/api/liabilities", { method: "POST", body: liability });
+
+export const apiUpdateLiability = (id, liability) =>
+  request("/api/liabilities/" + id, { method: "PUT", body: liability });
+
+export const apiPayLiability = (id, payment) =>
+  request("/api/liabilities/" + id + "/payments", {
+    method: "POST",
+    body: payment,
+  });
+
+export const apiCancelLiability = (id) =>
+  request("/api/liabilities/" + id + "/cancel", { method: "PUT" });
+
+export const apiDeleteLiability = (id) =>
+  request("/api/liabilities/" + id, { method: "DELETE" });

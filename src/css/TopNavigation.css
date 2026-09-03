@@ -5,19 +5,13 @@
 .top-navigation {
   width: 100%;
   height: 54px;
-
   background: #6598e8;
-
   display: flex;
   align-items: center;
-
   padding: 0 25px;
   gap: 20px;
-
   box-sizing: border-box;
-
   border-bottom: 1px solid #d9d9d9;
-
   font-family: "Poppins", sans-serif;
 }
 
@@ -28,28 +22,18 @@
 .nav-button {
   min-width: 160px;
   height: 42px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   padding: 0 18px;
-
   box-sizing: border-box;
-
   border-radius: 20px;
-
   text-decoration: none;
-
   color: #ffffff;
-
   font-size: 13px;
   font-weight: 500;
-
   cursor: pointer;
-
   transition: all 0.2s ease;
-
   white-space: nowrap;
 }
 
@@ -59,7 +43,6 @@
 
 .nav-button:hover {
   background: rgba(255, 255, 255, 0.16);
-
   color: #ffffff;
 }
 
@@ -69,9 +52,7 @@
 
 .nav-button.active {
   background: #ffffff;
-
   color: #222222;
-
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
@@ -81,7 +62,6 @@
 
 .nav-button.active:hover {
   background: #ffffff;
-
   color: #222222;
 }
 
@@ -92,15 +72,12 @@
 @media (max-width: 900px) {
   .top-navigation {
     padding: 0 12px;
-
     gap: 8px;
   }
 
   .nav-button {
     min-width: auto;
-
     padding: 0 14px;
-
     font-size: 12px;
   }
 }
@@ -112,23 +89,105 @@
 @media (max-width: 600px) {
   .top-navigation {
     height: auto;
-
     min-height: 54px;
-
     padding: 7px;
-
     gap: 5px;
-
     overflow-x: auto;
   }
 
   .nav-button {
     flex-shrink: 0;
-
     min-width: 125px;
-
     height: 40px;
-
     font-size: 11px;
+  }
+}
+
+/* =========================================================
+   APPENDED — AUTH SECTION (user badge + logout / login)
+   functional TopNavigation साठी, तुमच्याच theme मध्ये
+========================================================= */
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+}
+
+.nav-logout {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 18px;
+  background: #ffffff;
+  color: #d32f2f;
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.nav-logout:hover {
+  background: #d32f2f;
+  color: #ffffff;
+}
+
+.nav-login-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 18px;
+  background: #ffffff;
+  color: #222222;
+  font-family: "Poppins", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.nav-login-link:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+@media (max-width: 900px) {
+  .nav-right {
+    margin-left: 0;
+  }
+
+  .nav-user {
+    display: none;
   }
 }
